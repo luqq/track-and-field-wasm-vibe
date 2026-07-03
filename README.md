@@ -57,6 +57,12 @@ El puerto puede fijarse con `ASPNETCORE_URLS=http://127.0.0.1:5807` (el `firstPo
   (Tutankham), marca idéntica ×3 en longitud, pájaro en jabalina, topo en altura tras
   dos nulos y un tercero limpio.
 
+## Ajuste de dificultad
+
+Todos los parámetros de dificultad (modelo de carrera, matriz de clasificación, físicas
+por evento, castigos y economía de puntos) están documentados en [TUNING.md](TUNING.md),
+con las fórmulas de equilibrio y un recetario de ajustes rápidos.
+
 ## Archivos
 
 | Archivo | Contenido |

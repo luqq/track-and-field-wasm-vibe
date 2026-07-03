@@ -34,7 +34,12 @@ public static partial class Engine
     [JSExport]
     public static void Update(double timestamp)
     {
-        if (!_seeded) { Game.SeedFrom(timestamp); _seeded = true; }
+        if (!_seeded)
+        {
+            Game.SeedFrom(timestamp);
+            Settings.Load();
+            _seeded = true;
+        }
         if (_lastTs < 0) _lastTs = timestamp;
         _accum += Math.Min(100, timestamp - _lastTs); // clamp tab-switch gaps
         _lastTs = timestamp;
@@ -54,4 +59,8 @@ public static partial class Engine
     /// <summary>0/1 = RUN buttons (not discriminated, faithful to the board), 2 = ACTION, 3 = START.</summary>
     [JSExport]
     public static void OnButton(int button, int isDown) => Input.OnButton(button, isDown != 0);
+
+    /// <summary>Raw input code (KeyboardEvent.code or "PAD0".."PAD15"); mapping lives in C#.</summary>
+    [JSExport]
+    public static void OnKey(string code, int isDown) => Input.OnRaw(code, isDown != 0);
 }

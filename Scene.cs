@@ -92,7 +92,7 @@ public static class Scene
 
     public static void SpeedBar(double speedCms)
     {
-        Gfx.Text(8, 200, "SPEED", Gfx.White);
+        Gfx.Text(8, 200, L.Speed, Gfx.White);
         Gfx.FillRect(48, 200, 154, 7, Gfx.DarkGray);
         int w = (int)(Math.Clamp(speedCms / 1500.0, 0, 1) * 152);
         uint c = speedCms > 1200 ? Gfx.Red : speedCms > 800 ? Gfx.Yellow : Gfx.Cyan;

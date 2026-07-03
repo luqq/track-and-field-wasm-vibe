@@ -9,6 +9,10 @@ public class LongJump : EventBase
 {
     public override string Name => L.EventNames[1];
     public override string QualText => $"{L.Qualify} {_qual:0.00} M";
+    public override string HudLeft => $"{L.Attempt} {Math.Min(_attempt + 1, 3)}/3  {L.Best} {_best:0.00}M";
+    public override string HudQual => $"{_qual:0.00} M";
+    public override string HudBox => $"{_best,5:0.00}";
+    public override double[] Records => new[] { 8.90, 8.79, 8.76 };
 
     private const int FoulCm = 4500;
     private enum Ph { Wait, Run, Hold, Fly, Land, Foul, Done }
@@ -185,9 +189,6 @@ public class LongJump : EventBase
                 break;
         }
 
-        Gfx.Text(8, 4, $"{L.Attempt} {Math.Min(_attempt + (_ph is Ph.Land or Ph.Foul or Ph.Done ? 0 : 1), 3)}/3", Gfx.White);
-        Gfx.Text(130, 4, $"{L.Qual} {_qual:0.00}M", Gfx.Cyan);
-        Gfx.Text(8, 12, $"{L.Best} {_best:0.00}M", Gfx.Yellow);
         if (_ph is Ph.Run or Ph.Wait or Ph.Hold) Scene.SpeedBar(_run.SpeedCms);
     }
 }
@@ -201,6 +202,10 @@ public class Javelin : EventBase
 {
     public override string Name => L.EventNames[2];
     public override string QualText => $"{L.Qualify} {_qual:0.00} M";
+    public override string HudLeft => $"{L.Attempt} {Math.Min(_attempt + 1, 3)}/3  {L.Best} {_best:0.00}M";
+    public override string HudQual => $"{_qual:0.00} M";
+    public override string HudBox => $"{_best,5:0.00}";
+    public override double[] Records => new[] { 99.72, 96.72, 94.58 };
 
     private const int FoulCm = 4000;
     private const double GEff = 981.0 / 3.2; // arcade-scaled gravity
@@ -432,9 +437,6 @@ public class Javelin : EventBase
                 break;
         }
 
-        Gfx.Text(8, 4, $"{L.Attempt} {Math.Min(_attempt + (_ph is Ph.Land or Ph.Foul or Ph.Done ? 0 : 1), 3)}/3", Gfx.White);
-        Gfx.Text(130, 4, $"{L.Qual} {_qual:0.00}M", Gfx.Cyan);
-        Gfx.Text(8, 12, $"{L.Best} {_best:0.00}M", Gfx.Yellow);
         if (_ph is Ph.Run or Ph.Wait or Ph.Hold) Scene.SpeedBar(_run.SpeedCms);
     }
 

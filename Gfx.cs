@@ -28,6 +28,8 @@ public static class Gfx
     public static readonly uint Cyan = Rgb(0, 216, 216);
     public static readonly uint Skin = Rgb(248, 184, 128);
     public static readonly uint Gray = Rgb(140, 140, 140);
+    public static readonly uint LightGray = Rgb(200, 200, 200);
+    public static readonly uint Salmon = Rgb(228, 116, 84);
     public static readonly uint DarkGray = Rgb(70, 70, 70);
     public static readonly uint Brown = Rgb(140, 90, 40);
 
@@ -51,6 +53,14 @@ public static class Gfx
 
     public static void HLine(int x, int y, int w, uint c) => FillRect(x, y, w, 1, c);
     public static void VLine(int x, int y, int h, uint c) => FillRect(x, y, 1, h, c);
+
+    public static void Rect(int x, int y, int w, int h, uint c)
+    {
+        HLine(x, y, w, c);
+        HLine(x, y + h - 1, w, c);
+        VLine(x, y, h, c);
+        VLine(x + w - 1, y, h, c);
+    }
 
     public static void Line(int x0, int y0, int x1, int y1, uint c, int thick = 1)
     {

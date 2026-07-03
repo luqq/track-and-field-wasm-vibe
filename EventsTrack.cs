@@ -12,6 +12,15 @@ public abstract class EventBase
     public abstract void Step();
     public abstract void Draw();
 
+    // scoreboard feeds (Hyper Olympic top panel)
+    public virtual string HudLeft => "";
+    public virtual string HudQual => "";
+    public virtual string HudBox => "";
+    public virtual double[] Records => new[] { 0.0, 0.0, 0.0 };
+
+    protected static string TimeBox(double t)
+        => $"{(int)Math.Min(t, 99):00}:{(int)(Math.Min(t, 99.99) * 100) % 100:00}";
+
     protected const double Dt = 1.0 / 60.0;
 
     protected static int AngleBonusCms(int deg) => deg switch
@@ -28,6 +37,10 @@ public class Dash100 : EventBase
 {
     public override string Name => L.EventNames[0];
     public override string QualText => $"{L.Qualify} {_qual:0.00} {L.Sec}";
+    public override string HudLeft => _falseStarts > 0 ? $"{L.FalseStart} {_falseStarts}" : "";
+    public override string HudQual => $"{_qual:0.00}";
+    public override string HudBox => TimeBox(_timer);
+    public override double[] Records => new[] { 9.95, 10.08, 10.12 };
 
     private enum Ph { Marks, Set, Run, Done }
     private Ph _ph;
@@ -165,9 +178,6 @@ public class Dash100 : EventBase
             Athlete.Run(rx, Scene.RivalY, _timer * 12, _rSpeed / 1400, Gfx.Blue);
         }
 
-        Gfx.Text(8, 4, $"{L.Time} {_timer:00.00}", Gfx.White);
-        Gfx.Text(150, 4, $"{L.Qual} {_qual:0.00}", Gfx.Cyan);
-        if (_falseStarts > 0) Gfx.Text(8, 12, $"{L.FalseStart} {_falseStarts}", Gfx.Red);
         Scene.SpeedBar(_run.SpeedCms);
 
         if (_ph == Ph.Done)
@@ -183,6 +193,9 @@ public class Hurdles110 : EventBase
 {
     public override string Name => L.EventNames[3];
     public override string QualText => $"{L.Qualify} {_qual:0.00} {L.Sec}";
+    public override string HudQual => $"{_qual:0.00}";
+    public override string HudBox => TimeBox(_timer);
+    public override double[] Records => new[] { 12.93, 13.08, 13.26 };
 
     private enum Ph { Marks, Set, Run, Done }
     private Ph _ph;
@@ -336,8 +349,6 @@ public class Hurdles110 : EventBase
             else Athlete.Run(rx, Scene.RivalY, _timer * 12, _rSpeed / 1400, Gfx.Blue);
         }
 
-        Gfx.Text(8, 4, $"{L.Time} {_timer:00.00}", Gfx.White);
-        Gfx.Text(150, 4, $"{L.Qual} {_qual:0.00}", Gfx.Cyan);
         Scene.SpeedBar(_run.SpeedCms);
 
         if (_ph == Ph.Done)

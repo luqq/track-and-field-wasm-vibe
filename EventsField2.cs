@@ -9,6 +9,10 @@ public class Hammer : EventBase
 {
     public override string Name => L.EventNames[4];
     public override string QualText => $"{L.Qualify} {_qual:0.00} M";
+    public override string HudLeft => $"{L.Attempt} {Math.Min(_attempt + 1, 3)}/3  {L.Best} {_best:0.00}M";
+    public override string HudQual => $"{_qual:0.00} M";
+    public override string HudBox => $"{_best,5:0.00}";
+    public override double[] Records => new[] { 84.14, 83.98, 81.80 };
 
     private const int CircleCm = 300;         // front of the throwing circle
     private const double GEff = 981.0 / 3.6;
@@ -147,7 +151,7 @@ public class Hammer : EventBase
                 break;
             case Ph.Spin:
                 Athlete.Spin(cx, Scene.GroundY, _spinPhase, Game.CurJersey, out _, out _);
-                Gfx.Text(8, 12, $"{L.Revs} {_revs}", _revs >= 9 ? Gfx.Red : Gfx.Yellow);
+                Gfx.Text(8, 92, $"{L.Revs} {_revs}", _revs >= 9 ? Gfx.Red : Gfx.Yellow);
                 // release-direction hint dial
                 double d = _spinPhase;
                 Gfx.Circle(226, 206, 2, Gfx.White);
@@ -158,7 +162,7 @@ public class Hammer : EventBase
                 int hx = (int)(_hx * Scene.PxPerCm) - cam;
                 int hy = Scene.GroundY - (int)(_hy * 0.28);
                 Gfx.Circle(hx, hy, 2, Gfx.DarkGray);
-                Gfx.Text(8, 12, $"ANGLE {_releaseDeg}~", Gfx.Yellow);
+                Gfx.Text(8, 92, $"{_releaseDeg}~", Gfx.Yellow);
                 break;
             case Ph.Land:
                 Gfx.TextCentered(96, $"{_marks[_attempt - 1]:0.00} M", Gfx.White, 2);
@@ -172,8 +176,6 @@ public class Hammer : EventBase
                 break;
         }
 
-        Gfx.Text(8, 4, $"{L.Attempt} {Math.Min(_attempt + (_ph is Ph.Land or Ph.Foul or Ph.Done ? 0 : 1), 3)}/3", Gfx.White);
-        Gfx.Text(130, 4, $"{L.Qual} {_qual:0.00}M", Gfx.Cyan);
     }
 }
 
@@ -186,6 +188,10 @@ public class HighJump : EventBase
 {
     public override string Name => L.EventNames[5];
     public override string QualText => $"{L.Qualify} {_qual:0.00} M";
+    public override string HudLeft => $"{L.Bar} {_barM:0.00}M  {L.Miss} {_fouls}/3";
+    public override string HudQual => $"{_qual:0.00} M";
+    public override string HudBox => $"{_barM,5:0.00}";
+    public override double[] Records => new[] { 2.38, 2.37, 2.36 };
 
     private const double BarXCm = 700;        // bar plane
     private const double TakeoffCm = 660;     // hold zone begins
@@ -363,7 +369,7 @@ public class HighJump : EventBase
                 int fx = (int)(_jx * Scene.PxPerCm);
                 int fy = Scene.GroundY - (int)(_jy * 0.35);
                 Athlete.Fly(fx, fy, Game.CurJersey, _crossed ? 70 : 20, -160);
-                Gfx.Text(8, 12, $"H {_jy / 100:0.00}M", Gfx.Yellow);
+                Gfx.Text(8, 92, $"H {_jy / 100:0.00}M", Gfx.Yellow);
                 break;
             case Ph.Cleared:
                 Athlete.Celebrate(barX + 20, Scene.GroundY, _phT, Game.CurJersey);
@@ -378,8 +384,6 @@ public class HighJump : EventBase
                 break;
         }
 
-        Gfx.Text(8, 4, $"{L.Bar} {_barM:0.00}M  {L.Miss} {_fouls}/3", Gfx.White);
-        Gfx.Text(160, 4, $"{L.Qual} {_qual:0.00}M", Gfx.Cyan);
     }
 
     private void DrawBar(int barX, int barY)

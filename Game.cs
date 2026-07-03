@@ -30,6 +30,15 @@ public static class Game
     /// <summary>Jersey color of the player currently on the field (P1 red, P2 green).</summary>
     public static uint CurJersey => Players[_cur].Jersey;
 
+    // scoreboard accessors
+    public static string HudPlayer => $"{_cur + 1}P";
+    public static long HudScore => Players[_cur].Score;
+    public static int HudLives => Players[_cur].Lives;
+    public static int MatchNo => _match;
+    public static bool TwoPlayersMode => _playerCount == 2;
+    public static int CurrentPlayer => _cur;
+    public static long OtherScore => Players[1 - _cur].Score;
+
     private static int _match;
     private static int _eventIndex;
 
@@ -290,19 +299,19 @@ public static class Game
 
             case Mode.Intro:
                 Gfx.Clear(Gfx.Black);
-                Gfx.TextCentered(52, $"MATCH {_match}", Gfx.Cyan);
+                Gfx.TextCentered(64, $"MATCH {_match}", Gfx.Cyan);
                 if (_playerCount == 2)
-                    Gfx.TextCentered(64, $"{L.Player} {_cur + 1}", CurJersey);
+                    Gfx.TextCentered(76, $"{L.Player} {_cur + 1}", CurJersey);
                 int sc = Current.Name.Length * 12 <= 250 ? 2 : 1;
-                Gfx.TextCentered(sc == 2 ? 84 : 88, Current.Name, Gfx.White, sc);
-                Gfx.TextCentered(112, Current.QualText, Gfx.Yellow);
-                Gfx.TextCentered(140, L.EventHints[_eventIndex], Gfx.Gray);
-                DrawHud();
+                Gfx.TextCentered(sc == 2 ? 96 : 100, Current.Name, Gfx.White, sc);
+                Gfx.TextCentered(124, Current.QualText, Gfx.Yellow);
+                Gfx.TextCentered(148, L.EventHints[_eventIndex], Gfx.Gray);
+                Scene.DrawScoreboard(Current);
                 break;
 
             case Mode.Play:
                 Current.Draw();
-                DrawHud();
+                Scene.DrawScoreboard(Current);
                 break;
 
             case Mode.Result:
@@ -312,7 +321,7 @@ public static class Game
                 Gfx.TextCentered(104, Current.ResultText, Gfx.White);
                 if (Current.Qualified) Gfx.TextCentered(116, $"{L.Bonus} {Current.Points} PTS", Gfx.Cyan);
                 else if (Players[_cur].Lives > 0) Gfx.TextCentered(116, L.ExtraLife, Gfx.Cyan);
-                DrawHud();
+                Scene.DrawScoreboard(Current);
                 break;
 
             case Mode.GameOver:
@@ -332,22 +341,6 @@ public static class Game
         }
 
         DrawEggOverlay();
-    }
-
-    private static void DrawHud()
-    {
-        if (_playerCount == 2)
-        {
-            Gfx.Text(4, Gfx.H - 8, $"P1 {Players[0].Score:0000000}", _cur == 0 ? Players[0].Jersey : Gfx.Gray);
-            Gfx.Text(90, Gfx.H - 8, $"P2 {Players[1].Score:0000000}", _cur == 1 ? Players[1].Jersey : Gfx.Gray);
-            Gfx.Text(180, Gfx.H - 8, $"V{Players[_cur].Lives} M{_match}", Gfx.Cyan);
-        }
-        else
-        {
-            Gfx.Text(8, Gfx.H - 8, $"{Players[0].Score:0000000}", Gfx.White);
-            Gfx.Text(100, Gfx.H - 8, $"HI {_hiScore:0000000}", Gfx.Yellow);
-            Gfx.Text(210, Gfx.H - 8, $"V {Players[0].Lives}", Gfx.Cyan);
-        }
     }
 
     private static void DrawTitle()

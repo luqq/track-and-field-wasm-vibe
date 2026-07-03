@@ -17,17 +17,17 @@ public static class Scene
         return h ^ (h >> 16);
     }
 
-    /// <summary>Sky + crowd band + wall. camPx scrolls the crowd slightly (parallax).</summary>
+    /// <summary>Scoreboard band + crowd. camPx scrolls the crowd slightly (parallax).</summary>
     public static void DrawStadium(int camPx)
     {
-        Gfx.FillRect(0, 0, Gfx.W, 20, Gfx.Black);              // scoreboard band
-        Gfx.FillRect(0, 20, Gfx.W, 44, Gfx.Rgb(24, 24, 64));   // stands base
+        Gfx.FillRect(0, 0, Gfx.W, 56, Gfx.Black);              // scoreboard band
+        Gfx.FillRect(0, 56, Gfx.W, 32, Gfx.Rgb(24, 24, 64));   // stands base
         int par = camPx / 4;
-        for (int y = 24; y < 62; y += 3)
+        for (int y = 58; y < 87; y += 2)
             for (int x = 0; x < Gfx.W; x += 2)
             {
                 uint h = Hash(x + par, y);
-                if ((h & 7) < 3)
+                if ((h & 7) < 5) // dense 1983 confetti crowd
                 {
                     uint c = (h >> 4 & 3) switch
                     {
@@ -36,8 +36,42 @@ public static class Scene
                     Gfx.Px(x, y, c);
                 }
             }
-        Gfx.FillRect(0, 62, Gfx.W, 6, Gfx.Gray);               // wall
-        Gfx.FillRect(0, 68, Gfx.W, 20, Gfx.Grass);             // infield strip
+    }
+
+    /// <summary>
+    /// Top scoreboard, Hyper Olympic style: SCORE and WORLD RECORD panels,
+    /// status/qualify rows and the big boxed timer/mark readout.
+    /// </summary>
+    public static void DrawScoreboard(EventBase ev)
+    {
+        Gfx.FillRect(0, 0, Gfx.W, 56, Gfx.Black);
+
+        // SCORE panel
+        Gfx.Rect(2, 2, 122, 34, Gfx.Cyan);
+        Gfx.Text(8, 5, "SCORE", Gfx.Cyan);
+        Gfx.Text(8, 15, $"{Game.HudPlayer} {Game.HudScore:0000000}", Gfx.White);
+        for (int i = 0; i < Math.Min(Game.HudLives, 8); i++)
+            Gfx.FillRect(8 + i * 6, 28, 4, 4, Gfx.Yellow);
+        Gfx.Text(96, 27, $"M{Game.MatchNo}", Gfx.Gray);
+
+        // WORLD RECORD panel
+        Gfx.Rect(128, 2, 126, 34, Gfx.Cyan);
+        Gfx.Text(155, 5, "WORLD RECORD", Gfx.Cyan);
+        string[] pos = { "1ST", "2ND", "3RD" };
+        string[] who = { "EEE", "FFF", "GGG" };
+        var rec = ev.Records;
+        for (int i = 0; i < 3; i++)
+            Gfx.Text(136, 13 + i * 8, $"{pos[i]} {rec[i],6:0.00} {who[i]}", Gfx.Yellow);
+
+        // status + second player + qualify rows
+        if (ev.HudLeft.Length > 0) Gfx.Text(4, 39, ev.HudLeft, Gfx.White);
+        if (Game.TwoPlayersMode)
+            Gfx.Text(120, 39, $"{2 - Game.CurrentPlayer}P {Game.OtherScore:0000000}", Gfx.Gray);
+        Gfx.Text(4, 48, $"{L.Qualify} {ev.HudQual}", Gfx.Cyan);
+
+        // big boxed readout (running time / current mark)
+        Gfx.Rect(188, 37, 66, 19, Gfx.White);
+        Gfx.Text(192, 40, ev.HudBox, Gfx.Yellow, 2);
     }
 
     /// <summary>Two-lane running track with 10 m markers. camPx = camera in world pixels.</summary>

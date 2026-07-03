@@ -1,0 +1,12 @@
+{
+  "wasmHostProperties": {
+    "firstPort": 5807,
+    "perHostConfig": [
+      {
+        "name": "browser",
+        "host": "browser"
+      }
+    ],
+    "defaultConfig": "browser"
+  }
+}

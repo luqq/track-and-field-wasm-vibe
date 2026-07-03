@@ -74,6 +74,8 @@ public static class Font
         G('*', "00000|10101|01110|11111|01110|10101|00000");
         // degree sign, mapped to '~' for easy embedding in strings
         G('~', "01100|10010|10010|01100|00000|00000|00000");
+        G('Ñ', "01010|10001|11001|10101|10011|10001|10001");
+        G('Ç', "01110|10001|10000|10000|10001|01110|00100");
     }
 
     public static void Draw(int x, int y, char c, uint color, int scale = 1)

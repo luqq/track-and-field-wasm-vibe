@@ -7,8 +7,8 @@ namespace TrackAndField;
 /// </summary>
 public class Hammer : EventBase
 {
-    public override string Name => "HAMMER THROW";
-    public override string QualText => $"QUALIFY {_qual:0.00} M";
+    public override string Name => L.EventNames[4];
+    public override string QualText => $"{L.Qualify} {_qual:0.00} M";
 
     private const int CircleCm = 300;         // front of the throwing circle
     private const double GEff = 981.0 / 3.6;
@@ -24,7 +24,7 @@ public class Hammer : EventBase
 
     public override void Reset(int match)
     {
-        _qual = match switch { 1 => 75.00, 2 => 80.00, _ => 85.00 };
+        _qual = Math.Round((match switch { 1 => 75.00, 2 => 80.00, _ => 85.00 }) * Settings.DistF, 2);
         _attempt = 0; _best = 0; Array.Clear(_marks);
         Finished = Qualified = false; Points = 0; ResultText = "";
         NextAttempt();
@@ -53,7 +53,7 @@ public class Hammer : EventBase
                 _revs = (int)(_totalPhase / (2 * Math.PI));
                 if (_revs != _lastTickRev) { _lastTickRev = _revs; Audio.Tick(Math.Min(1, _revs / 9.0)); }
 
-                if (_revs > 11) { Foul("DIZZY! FOUL"); return; } // held on too long
+                if (_revs > 11) { Foul(L.Dizzy); return; } // held on too long
 
                 if (Input.ActionPressed) Release();
                 break;
@@ -86,7 +86,7 @@ public class Hammer : EventBase
     {
         // facing direction at this exact frame decides the elevation angle
         double deg = _spinPhase * 180.0 / Math.PI;
-        if (deg < 5 || deg > 85) { Foul("OUT OF SECTOR! FOUL"); return; }
+        if (deg < 5 || deg > 85) { Foul(L.OutOfSector); return; }
 
         _releaseDeg = (int)Math.Round(deg);
         double v = 920 + Math.Min(_revs, 9) * 70 + AngleBonusCms(_releaseDeg); // bonus intact here
@@ -104,6 +104,7 @@ public class Hammer : EventBase
         _marks[_attempt - 1] = -1;
         _ph = Ph.Foul; _phT = 1.8;
         ResultText = msg;
+        Voice.Foul();
         Audio.Jingle(Audio.JingleFail);
     }
 
@@ -114,6 +115,7 @@ public class Hammer : EventBase
         _marks[_attempt - 1] = meters;
         if (meters > _best) _best = meters;
         _ph = Ph.Land; _phT = 2.0;
+        Voice.Meters(meters);
         Audio.Tone(400, 100, 0.2);
     }
 
@@ -121,7 +123,7 @@ public class Hammer : EventBase
     {
         Qualified = _best >= _qual;
         Points = Qualified ? (int)((_best - _qual) * 100 + 1000) / 10 * 10 : 0;
-        ResultText = _best > 0 ? $"BEST {_best:0.00} M" : "NO MARK";
+        ResultText = _best > 0 ? $"{L.Best} {_best:0.00} M" : L.NoMark;
         _ph = Ph.Done; _phT = 2.2;
         Audio.Jingle(Qualified ? Audio.JingleQualify : Audio.JingleFail);
     }
@@ -140,19 +142,19 @@ public class Hammer : EventBase
         switch (_ph)
         {
             case Ph.Wait:
-                Athlete.Spin(cx, Scene.GroundY, Math.PI, Gfx.Red, out _, out _);
-                Gfx.TextCentered(96, "PRESS RUN TO SPIN", Gfx.Yellow);
+                Athlete.Spin(cx, Scene.GroundY, Math.PI, Game.CurJersey, out _, out _);
+                Gfx.TextCentered(96, L.PressRunToSpin, Gfx.Yellow);
                 break;
             case Ph.Spin:
-                Athlete.Spin(cx, Scene.GroundY, _spinPhase, Gfx.Red, out _, out _);
-                Gfx.Text(8, 12, $"REVS {_revs}", _revs >= 9 ? Gfx.Red : Gfx.Yellow);
+                Athlete.Spin(cx, Scene.GroundY, _spinPhase, Game.CurJersey, out _, out _);
+                Gfx.Text(8, 12, $"{L.Revs} {_revs}", _revs >= 9 ? Gfx.Red : Gfx.Yellow);
                 // release-direction hint dial
                 double d = _spinPhase;
                 Gfx.Circle(226, 206, 2, Gfx.White);
                 Gfx.Line(226, 206, 226 + (int)(Math.Cos(d) * 12), 206 - (int)(Math.Sin(d) * 12), Gfx.Yellow, 1);
                 break;
             case Ph.Fly:
-                Athlete.Throw(cx, Scene.GroundY, 1, Gfx.Red);
+                Athlete.Throw(cx, Scene.GroundY, 1, Game.CurJersey);
                 int hx = (int)(_hx * Scene.PxPerCm) - cam;
                 int hy = Scene.GroundY - (int)(_hy * 0.28);
                 Gfx.Circle(hx, hy, 2, Gfx.DarkGray);
@@ -170,8 +172,8 @@ public class Hammer : EventBase
                 break;
         }
 
-        Gfx.Text(8, 4, $"ATTEMPT {Math.Min(_attempt + (_ph is Ph.Land or Ph.Foul or Ph.Done ? 0 : 1), 3)}/3", Gfx.White);
-        Gfx.Text(120, 4, $"QUAL {_qual:0.00}M", Gfx.Cyan);
+        Gfx.Text(8, 4, $"{L.Attempt} {Math.Min(_attempt + (_ph is Ph.Land or Ph.Foul or Ph.Done ? 0 : 1), 3)}/3", Gfx.White);
+        Gfx.Text(130, 4, $"{L.Qual} {_qual:0.00}M", Gfx.Cyan);
     }
 }
 
@@ -182,8 +184,8 @@ public class Hammer : EventBase
 /// </summary>
 public class HighJump : EventBase
 {
-    public override string Name => "HIGH JUMP";
-    public override string QualText => $"QUALIFY {_qual:0.00} M";
+    public override string Name => L.EventNames[5];
+    public override string QualText => $"{L.Qualify} {_qual:0.00} M";
 
     private const double BarXCm = 700;        // bar plane
     private const double TakeoffCm = 660;     // hold zone begins
@@ -204,7 +206,7 @@ public class HighJump : EventBase
 
     public override void Reset(int match)
     {
-        _qual = match switch { 1 => 2.28, 2 => 2.35, _ => 2.40 };
+        _qual = Math.Round((match switch { 1 => 2.28, 2 => 2.35, _ => 2.40 }) * Settings.DistF, 2);
         _barM = _qual;
         _fouls = 0; _foulsAtHeight = 0; _best = 0;
         Finished = Qualified = false; Points = 0; ResultText = "";
@@ -308,6 +310,7 @@ public class HighJump : EventBase
         // secret: two fouls at this height, then a clean clear on the final attempt
         if (_foulsAtHeight >= 2) Game.TriggerEgg();
         _ph = Ph.Cleared; _phT = 2.0;
+        Voice.Meters(_barM);
         Audio.Jingle(Audio.JingleQualify);
     }
 
@@ -315,6 +318,7 @@ public class HighJump : EventBase
     {
         _fouls++; _foulsAtHeight++;
         _ph = Ph.Foul; _phT = 1.6;
+        Voice.Foul();
         Audio.Jingle(Audio.JingleFail);
     }
 
@@ -322,7 +326,7 @@ public class HighJump : EventBase
     {
         Qualified = _best >= _qual;
         Points = Qualified ? (int)((_best - _qual) * 4000 + 1000) / 10 * 10 : 0;
-        ResultText = _best > 0 ? $"BEST {_best:0.00} M" : "NO MARK";
+        ResultText = _best > 0 ? $"{L.Best} {_best:0.00} M" : L.NoMark;
         _ph = Ph.Done; _phT = 2.2;
         Audio.Jingle(Qualified ? Audio.JingleQualify : Audio.JingleFail);
     }
@@ -348,34 +352,34 @@ public class HighJump : EventBase
             case Ph.Wait:
             case Ph.Approach:
                 int px = (int)(_posCm * Scene.PxPerCm);
-                Athlete.Run(px, Scene.GroundY, _anim * Math.PI, 0.6, Gfx.Red);
+                Athlete.Run(px, Scene.GroundY, _anim * Math.PI, 0.6, Game.CurJersey);
                 break;
             case Ph.Hold:
                 int hx = (int)(_posCm * Scene.PxPerCm);
-                Athlete.Crouch(hx, Scene.GroundY, Gfx.Red);
+                Athlete.Crouch(hx, Scene.GroundY, Game.CurJersey);
                 Scene.AngleMeter(_angle);
                 break;
             case Ph.Fly:
                 int fx = (int)(_jx * Scene.PxPerCm);
                 int fy = Scene.GroundY - (int)(_jy * 0.35);
-                Athlete.Fly(fx, fy, Gfx.Red, _crossed ? 70 : 20, -160);
+                Athlete.Fly(fx, fy, Game.CurJersey, _crossed ? 70 : 20, -160);
                 Gfx.Text(8, 12, $"H {_jy / 100:0.00}M", Gfx.Yellow);
                 break;
             case Ph.Cleared:
-                Athlete.Celebrate(barX + 20, Scene.GroundY, _phT, Gfx.Red);
-                Gfx.TextCentered(96, $"{_barM:0.00} M CLEARED!", Gfx.White, 2);
+                Athlete.Celebrate(barX + 20, Scene.GroundY, _phT, Game.CurJersey);
+                Gfx.TextCentered(96, $"{_barM:0.00} M {L.Cleared}", Gfx.White, 2);
                 break;
             case Ph.Foul:
-                Athlete.Fallen(barX + (_crossed ? 20 : -14), Scene.GroundY, Gfx.Red);
-                Gfx.TextCentered(96, _hitBar ? "BAR DOWN! FOUL" : "FOUL!", Gfx.Red, 2);
+                Athlete.Fallen(barX + (_crossed ? 20 : -14), Scene.GroundY, Game.CurJersey);
+                Gfx.TextCentered(96, _hitBar ? L.BarDown : L.Foul, Gfx.Red, 2);
                 break;
             case Ph.Done:
                 Gfx.TextCentered(96, ResultText, Gfx.White, 2);
                 break;
         }
 
-        Gfx.Text(8, 4, $"BAR {_barM:0.00}M  MISS {_fouls}/3", Gfx.White);
-        Gfx.Text(150, 4, $"QUAL {_qual:0.00}M", Gfx.Cyan);
+        Gfx.Text(8, 4, $"{L.Bar} {_barM:0.00}M  {L.Miss} {_fouls}/3", Gfx.White);
+        Gfx.Text(160, 4, $"{L.Qual} {_qual:0.00}M", Gfx.Cyan);
     }
 
     private void DrawBar(int barX, int barY)

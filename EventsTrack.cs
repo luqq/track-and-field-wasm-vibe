@@ -26,8 +26,8 @@ public abstract class EventBase
 /// <summary>100m Dash. Pure button mashing, false starts, crouch-to-run latency, CPU rival.</summary>
 public class Dash100 : EventBase
 {
-    public override string Name => "100M DASH";
-    public override string QualText => $"QUALIFY {_qual:0.00} SEC";
+    public override string Name => L.EventNames[0];
+    public override string QualText => $"{L.Qualify} {_qual:0.00} {L.Sec}";
 
     private enum Ph { Marks, Set, Run, Done }
     private Ph _ph;
@@ -44,9 +44,10 @@ public class Dash100 : EventBase
 
     public override void Reset(int match)
     {
-        _qual = match switch { 1 => 13.50, 2 => 10.50, _ => 10.00 };
+        _qual = Math.Round((match switch { 1 => 13.50, 2 => 10.50, _ => 10.00 }) * Settings.TimeF, 2);
         _ph = Ph.Marks; _phT = 1.4;
         _run.Reset();
+        _run.TapGain = 55 * Settings.TapF;
         _distCm = _timer = _anim = _standT = 0;
         _falseStarts = 0; _dq = _pDone = _rDone = false;
         _pTime = _rTime = 0; _rDist = _rSpeed = 0; _doneT = 0;
@@ -127,14 +128,15 @@ public class Dash100 : EventBase
         _ph = Ph.Done; _doneT = 0;
         if (_dq)
         {
-            Qualified = false; Points = 0; ResultText = "DISQUALIFIED!";
+            Qualified = false; Points = 0; ResultText = L.Disqualified;
             Audio.Jingle(Audio.JingleFail);
             return;
         }
         if (!_pDone) _pTime = 99.99;
         Qualified = _pTime <= _qual;
         Points = Qualified ? (int)((_qual - _pTime) * 2000 + 1000) / 10 * 10 : 0;
-        ResultText = $"TIME {_pTime:0.00}";
+        ResultText = $"{L.Time} {_pTime:0.00}";
+        Voice.Time(_pTime);
         // perfect tie with the rival: Tutankham explorer easter egg
         if (_rDone && Math.Abs(Math.Round(_pTime, 2) - Math.Round(_rTime, 2)) < 0.005)
             Game.TriggerEgg();
@@ -151,27 +153,27 @@ public class Dash100 : EventBase
 
         if (_ph is Ph.Marks or Ph.Set)
         {
-            Athlete.Crouch(px, Scene.GroundY, Gfx.Red);
+            Athlete.Crouch(px, Scene.GroundY, Game.CurJersey);
             Athlete.Crouch(rx, Scene.RivalY, Gfx.Blue);
-            Gfx.TextCentered(96, _ph == Ph.Marks ? "ON YOUR MARKS" : "SET...", Gfx.Yellow);
+            Gfx.TextCentered(96, _ph == Ph.Marks ? L.OnYourMarks : L.Set, Gfx.Yellow);
         }
         else
         {
             if (_distCm > 0 || _run.SpeedCms > 0)
-                Athlete.Run(px, Scene.GroundY, _anim * Math.PI, _run.SpeedCms / 1400, Gfx.Red);
-            else Athlete.Crouch(px, Scene.GroundY, Gfx.Red);
+                Athlete.Run(px, Scene.GroundY, _anim * Math.PI, _run.SpeedCms / 1400, Game.CurJersey);
+            else Athlete.Crouch(px, Scene.GroundY, Game.CurJersey);
             Athlete.Run(rx, Scene.RivalY, _timer * 12, _rSpeed / 1400, Gfx.Blue);
         }
 
-        Gfx.Text(8, 4, $"TIME {_timer:00.00}", Gfx.White);
-        Gfx.Text(150, 4, $"QUAL {_qual:0.00}", Gfx.Cyan);
-        if (_falseStarts > 0) Gfx.Text(8, 12, $"FALSE START {_falseStarts}", Gfx.Red);
+        Gfx.Text(8, 4, $"{L.Time} {_timer:00.00}", Gfx.White);
+        Gfx.Text(150, 4, $"{L.Qual} {_qual:0.00}", Gfx.Cyan);
+        if (_falseStarts > 0) Gfx.Text(8, 12, $"{L.FalseStart} {_falseStarts}", Gfx.Red);
         Scene.SpeedBar(_run.SpeedCms);
 
         if (_ph == Ph.Done)
         {
             Gfx.TextCentered(96, ResultText, _dq ? Gfx.Red : Gfx.White, 2);
-            if (_rDone && !_dq) Gfx.TextCentered(114, $"RIVAL {_rTime:0.00}", Gfx.Cyan);
+            if (_rDone && !_dq) Gfx.TextCentered(114, $"{L.Rival} {_rTime:0.00}", Gfx.Cyan);
         }
     }
 }
@@ -179,8 +181,8 @@ public class Dash100 : EventBase
 /// <summary>110m Hurdles. One single attempt; hitting a hurdle almost kills all momentum.</summary>
 public class Hurdles110 : EventBase
 {
-    public override string Name => "110M HURDLES";
-    public override string QualText => $"QUALIFY {_qual:0.00} SEC";
+    public override string Name => L.EventNames[3];
+    public override string QualText => $"{L.Qualify} {_qual:0.00} {L.Sec}";
 
     private enum Ph { Marks, Set, Run, Done }
     private Ph _ph;
@@ -201,9 +203,10 @@ public class Hurdles110 : EventBase
 
     public override void Reset(int match)
     {
-        _qual = match switch { 1 => 14.00, 2 => 13.00, _ => 12.50 };
+        _qual = Math.Round((match switch { 1 => 14.00, 2 => 13.00, _ => 12.50 }) * Settings.TimeF, 2);
         _ph = Ph.Marks; _phT = 1.4;
         _run.Reset();
+        _run.TapGain = 55 * Settings.TapF;
         _distCm = _timer = _anim = _jumpT = _rJumpT = _stumbleT = 0;
         _pDone = _rDone = false; _pTime = _rTime = 0;
         _rDist = _rSpeed = 0; _doneT = 0;
@@ -290,7 +293,8 @@ public class Hurdles110 : EventBase
         if (!_pDone) _pTime = 99.99;
         Qualified = _pTime <= _qual;
         Points = Qualified ? (int)((_qual - _pTime) * 2000 + 1000) / 10 * 10 : 0;
-        ResultText = $"TIME {_pTime:0.00}";
+        ResultText = $"{L.Time} {_pTime:0.00}";
+        Voice.Time(_pTime);
         if (_rDone && Math.Abs(Math.Round(_pTime, 2) - Math.Round(_rTime, 2)) < 0.005)
             Game.TriggerEgg();
     }
@@ -318,28 +322,28 @@ public class Hurdles110 : EventBase
 
         if (_ph is Ph.Marks or Ph.Set)
         {
-            Athlete.Crouch(px, Scene.GroundY, Gfx.Red);
+            Athlete.Crouch(px, Scene.GroundY, Game.CurJersey);
             Athlete.Crouch(rx, Scene.RivalY, Gfx.Blue);
-            Gfx.TextCentered(96, _ph == Ph.Marks ? "ON YOUR MARKS" : "SET...", Gfx.Yellow);
+            Gfx.TextCentered(96, _ph == Ph.Marks ? L.OnYourMarks : L.Set, Gfx.Yellow);
         }
         else
         {
-            if (_stumbleT > 0) Athlete.Fallen(px, Scene.GroundY, Gfx.Red);
-            else if (_jumpT > 0) Athlete.Fly(px, Scene.GroundY - pyOff, Gfx.Red, 60);
-            else Athlete.Run(px, Scene.GroundY, _anim * Math.PI, _run.SpeedCms / 1400, Gfx.Red);
+            if (_stumbleT > 0) Athlete.Fallen(px, Scene.GroundY, Game.CurJersey);
+            else if (_jumpT > 0) Athlete.Fly(px, Scene.GroundY - pyOff, Game.CurJersey, 60);
+            else Athlete.Run(px, Scene.GroundY, _anim * Math.PI, _run.SpeedCms / 1400, Game.CurJersey);
 
             if (_rJumpT > 0) Athlete.Fly(rx, Scene.RivalY - ryOff, Gfx.Blue, 60);
             else Athlete.Run(rx, Scene.RivalY, _timer * 12, _rSpeed / 1400, Gfx.Blue);
         }
 
-        Gfx.Text(8, 4, $"TIME {_timer:00.00}", Gfx.White);
-        Gfx.Text(150, 4, $"QUAL {_qual:0.00}", Gfx.Cyan);
+        Gfx.Text(8, 4, $"{L.Time} {_timer:00.00}", Gfx.White);
+        Gfx.Text(150, 4, $"{L.Qual} {_qual:0.00}", Gfx.Cyan);
         Scene.SpeedBar(_run.SpeedCms);
 
         if (_ph == Ph.Done)
         {
             Gfx.TextCentered(96, ResultText, Gfx.White, 2);
-            if (_rDone) Gfx.TextCentered(114, $"RIVAL {_rTime:0.00}", Gfx.Cyan);
+            if (_rDone) Gfx.TextCentered(114, $"{L.Rival} {_rTime:0.00}", Gfx.Cyan);
         }
     }
 }

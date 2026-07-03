@@ -7,8 +7,8 @@ namespace TrackAndField;
 /// </summary>
 public class LongJump : EventBase
 {
-    public override string Name => "LONG JUMP";
-    public override string QualText => $"QUALIFY {_qual:0.00} M";
+    public override string Name => L.EventNames[1];
+    public override string QualText => $"{L.Qualify} {_qual:0.00} M";
 
     private const int FoulCm = 4500;
     private enum Ph { Wait, Run, Hold, Fly, Land, Foul, Done }
@@ -24,7 +24,8 @@ public class LongJump : EventBase
 
     public override void Reset(int match)
     {
-        _qual = match switch { 1 => 6.50, 2 => 8.50, _ => 9.00 };
+        _qual = Math.Round((match switch { 1 => 6.50, 2 => 8.50, _ => 9.00 }) * Settings.DistF, 2);
+        _run.TapGain = 55 * Settings.TapF;
         _attempt = 0; _best = 0; Array.Clear(_marks);
         _sameMarkStreak = 0; _lastMarkCm = -1;
         Finished = Qualified = false; Points = 0; ResultText = "";
@@ -92,6 +93,7 @@ public class LongJump : EventBase
         _attempt++;
         _marks[_attempt - 1] = -1;
         _ph = Ph.Foul; _phT = 1.8;
+        Voice.Foul();
         _sameMarkStreak = 0; _lastMarkCm = -1;
         Audio.Jingle(Audio.JingleFail);
     }
@@ -128,6 +130,7 @@ public class LongJump : EventBase
         if (_sameMarkStreak >= 3) Game.TriggerEgg();
 
         _ph = Ph.Land; _phT = 2.0;
+        Voice.Meters(_marks[_attempt - 1]);
         Audio.Tone(400, 100, 0.2);
     }
 
@@ -135,7 +138,7 @@ public class LongJump : EventBase
     {
         Qualified = _best >= _qual;
         Points = Qualified ? (int)((_best - _qual) * 2000 + 1000) / 10 * 10 : 0;
-        ResultText = _best > 0 ? $"BEST {_best:0.00} M" : "NO MARK";
+        ResultText = _best > 0 ? $"{L.Best} {_best:0.00} M" : L.NoMark;
         _ph = Ph.Done; _phT = 2.2;
         Audio.Jingle(Qualified ? Audio.JingleQualify : Audio.JingleFail);
     }
@@ -156,35 +159,35 @@ public class LongJump : EventBase
             case Ph.Run:
                 int px = (int)(_posCm * Scene.PxPerCm) - cam;
                 if (_run.SpeedCms > 1)
-                    Athlete.Run(px, Scene.GroundY, _anim * Math.PI, _run.SpeedCms / 1400, Gfx.Red);
-                else Athlete.Crouch(px, Scene.GroundY, Gfx.Red);
+                    Athlete.Run(px, Scene.GroundY, _anim * Math.PI, _run.SpeedCms / 1400, Game.CurJersey);
+                else Athlete.Crouch(px, Scene.GroundY, Game.CurJersey);
                 break;
             case Ph.Hold:
-                Athlete.Crouch((int)(_posCm * Scene.PxPerCm) - cam, Scene.GroundY, Gfx.Red);
+                Athlete.Crouch((int)(_posCm * Scene.PxPerCm) - cam, Scene.GroundY, Game.CurJersey);
                 Scene.AngleMeter(_angle);
                 break;
             case Ph.Fly:
                 int fx = (int)(_fx * Scene.PxPerCm) - cam;
                 int fy = Scene.GroundY - (int)(_fy * 0.28);
-                Athlete.Fly(fx, fy, Gfx.Red, 55);
+                Athlete.Fly(fx, fy, Game.CurJersey, 55);
                 Scene.AngleMeter(_angle);
                 break;
             case Ph.Land:
                 int lx = (int)(_fx * Scene.PxPerCm) - cam;
-                Athlete.Crouch(lx, Scene.GroundY, Gfx.Red);
+                Athlete.Crouch(lx, Scene.GroundY, Game.CurJersey);
                 Gfx.TextCentered(96, $"{_marks[_attempt - 1]:0.00} M", Gfx.White, 2);
                 break;
             case Ph.Foul:
-                Gfx.TextCentered(96, "FOUL!", Gfx.Red, 2);
+                Gfx.TextCentered(96, L.Foul, Gfx.Red, 2);
                 break;
             case Ph.Done:
                 Gfx.TextCentered(96, ResultText, Gfx.White, 2);
                 break;
         }
 
-        Gfx.Text(8, 4, $"ATTEMPT {Math.Min(_attempt + (_ph is Ph.Land or Ph.Foul or Ph.Done ? 0 : 1), 3)}/3", Gfx.White);
-        Gfx.Text(120, 4, $"QUAL {_qual:0.00}M", Gfx.Cyan);
-        Gfx.Text(8, 12, $"BEST {_best:0.00}M", Gfx.Yellow);
+        Gfx.Text(8, 4, $"{L.Attempt} {Math.Min(_attempt + (_ph is Ph.Land or Ph.Foul or Ph.Done ? 0 : 1), 3)}/3", Gfx.White);
+        Gfx.Text(130, 4, $"{L.Qual} {_qual:0.00}M", Gfx.Cyan);
+        Gfx.Text(8, 12, $"{L.Best} {_best:0.00}M", Gfx.Yellow);
         if (_ph is Ph.Run or Ph.Wait or Ph.Hold) Scene.SpeedBar(_run.SpeedCms);
     }
 }
@@ -196,8 +199,8 @@ public class LongJump : EventBase
 /// </summary>
 public class Javelin : EventBase
 {
-    public override string Name => "JAVELIN THROW";
-    public override string QualText => $"QUALIFY {_qual:0.00} M";
+    public override string Name => L.EventNames[2];
+    public override string QualText => $"{L.Qualify} {_qual:0.00} M";
 
     private const int FoulCm = 4000;
     private const double GEff = 981.0 / 3.2; // arcade-scaled gravity
@@ -215,10 +218,10 @@ public class Javelin : EventBase
 
     public override void Reset(int match)
     {
-        _qual = match switch { 1 => 70.00, 2 => 75.00, _ => 80.00 };
+        _qual = Math.Round((match switch { 1 => 70.00, 2 => 75.00, _ => 80.00 }) * Settings.DistF, 2);
         // generous tap gain: on the original board reaching the 1300 cm/s cap was the
         // easy part (hence the cap) — the skill lives in the release angle
-        _run.TapGain = 78.0;
+        _run.TapGain = 78.0 * Settings.TapF;
         _attempt = 0; _best = 0; _prevMark = 0; Array.Clear(_marks);
         Finished = Qualified = false; Points = 0; ResultText = "";
         NextAttempt();
@@ -299,6 +302,7 @@ public class Javelin : EventBase
         _marks[_attempt - 1] = -1;
         _prevMark = 0;
         _ph = Ph.Foul; _phT = 1.8;
+        Voice.Foul();
         Audio.Jingle(Audio.JingleFail);
     }
 
@@ -361,6 +365,7 @@ public class Javelin : EventBase
         _prevMark = meters;
         if (meters > _best) _best = meters;
         _ph = Ph.Land; _phT = 2.0;
+        Voice.Meters(_marks[_attempt - 1]);
         Audio.Tone(400, 100, 0.2);
     }
 
@@ -368,7 +373,7 @@ public class Javelin : EventBase
     {
         Qualified = _best >= _qual;
         Points = Qualified ? (int)((_best - _qual) * 100 + 1000) / 10 * 10 : 0;
-        ResultText = _best > 0 ? $"BEST {_best:0.00} M" : "NO MARK";
+        ResultText = _best > 0 ? $"{L.Best} {_best:0.00} M" : L.NoMark;
         _ph = Ph.Done; _phT = 2.2;
         Audio.Jingle(Qualified ? Audio.JingleQualify : Audio.JingleFail);
     }
@@ -386,28 +391,28 @@ public class Javelin : EventBase
             case Ph.Wait:
             case Ph.Run:
                 if (_run.SpeedCms > 1)
-                    Athlete.Run(px, Scene.GroundY, _anim * Math.PI, _run.SpeedCms / 1400, Gfx.Red);
-                else Athlete.Crouch(px, Scene.GroundY, Gfx.Red);
+                    Athlete.Run(px, Scene.GroundY, _anim * Math.PI, _run.SpeedCms / 1400, Game.CurJersey);
+                else Athlete.Crouch(px, Scene.GroundY, Game.CurJersey);
                 DrawJavelinInHand(px);
                 break;
             case Ph.Hold:
-                Athlete.Throw(px, Scene.GroundY, 0, Gfx.Red);
+                Athlete.Throw(px, Scene.GroundY, 0, Game.CurJersey);
                 DrawJavelinInHand(px);
                 Scene.AngleMeter(_angle);
                 break;
             case Ph.Throwing:
-                Athlete.Throw(px, Scene.GroundY, _throwT / 0.22, Gfx.Red);
+                Athlete.Throw(px, Scene.GroundY, _throwT / 0.22, Game.CurJersey);
                 Scene.AngleMeter(_angle);
                 break;
             case Ph.Fly:
-                Athlete.Throw(px, Scene.GroundY, 1, Gfx.Red);
+                Athlete.Throw(px, Scene.GroundY, 1, Game.CurJersey);
                 int jx = (int)(_jx * Scene.PxPerCm) - cam;
                 int jy = Scene.GroundY - (int)(_jy * 0.28);
                 double a = Math.Atan2(_jvy, _jvx);
                 Gfx.Line(jx, jy, jx + (int)(Math.Cos(a) * 10), jy - (int)(Math.Sin(a) * 10), Gfx.White, 1);
                 break;
             case Ph.Egg:
-                Athlete.Throw(px, Scene.GroundY, 1, Gfx.Red);
+                Athlete.Throw(px, Scene.GroundY, 1, Game.CurJersey);
                 // the javelin left the top of the screen and hit an unidentified bird
                 int by = (int)((2.5 - _phT) / 2.5 * (Scene.GroundY - 60)) + 40;
                 Game.DrawBird(px + 60, by);
@@ -417,19 +422,19 @@ public class Javelin : EventBase
                 int lx = (int)(_jx * Scene.PxPerCm) - cam;
                 Gfx.Line(lx, Scene.GroundY - 8, lx + 4, Scene.GroundY, Gfx.White, 1);
                 Gfx.TextCentered(96, $"{_marks[_attempt - 1]:0.00} M", _rolledOver ? Gfx.Red : Gfx.White, 2);
-                if (_rolledOver) Gfx.TextCentered(114, "COUNTER ROLLOVER!", Gfx.Red);
+                if (_rolledOver) Gfx.TextCentered(114, L.Rollover, Gfx.Red);
                 break;
             case Ph.Foul:
-                Gfx.TextCentered(96, "FOUL!", Gfx.Red, 2);
+                Gfx.TextCentered(96, L.Foul, Gfx.Red, 2);
                 break;
             case Ph.Done:
                 Gfx.TextCentered(96, ResultText, Gfx.White, 2);
                 break;
         }
 
-        Gfx.Text(8, 4, $"ATTEMPT {Math.Min(_attempt + (_ph is Ph.Land or Ph.Foul or Ph.Done ? 0 : 1), 3)}/3", Gfx.White);
-        Gfx.Text(120, 4, $"QUAL {_qual:0.00}M", Gfx.Cyan);
-        Gfx.Text(8, 12, $"BEST {_best:0.00}M", Gfx.Yellow);
+        Gfx.Text(8, 4, $"{L.Attempt} {Math.Min(_attempt + (_ph is Ph.Land or Ph.Foul or Ph.Done ? 0 : 1), 3)}/3", Gfx.White);
+        Gfx.Text(130, 4, $"{L.Qual} {_qual:0.00}M", Gfx.Cyan);
+        Gfx.Text(8, 12, $"{L.Best} {_best:0.00}M", Gfx.Yellow);
         if (_ph is Ph.Run or Ph.Wait or Ph.Hold) Scene.SpeedBar(_run.SpeedCms);
     }
 

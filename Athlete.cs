@@ -1,12 +1,50 @@
 namespace TrackAndField;
 
 /// <summary>
-/// Procedural pixel athlete: a small articulated skeleton rendered with thick lines.
-/// (x, y) = ground point under the hips. Faces +X unless flipped.
+/// Pluggable athlete renderer. Events draw through the static <see cref="Athlete"/> facade;
+/// assign <c>Athlete.Renderer = new SpriteAthlete { ... }</c> to swap the vector skeleton
+/// for sprite-sheet frames (see README).
 /// </summary>
+public interface IAthleteRenderer
+{
+    void Run(int x, int y, double phase, double speed01, uint jersey, bool flip);
+    void Crouch(int x, int y, uint jersey, bool flip);
+    void Fly(int x, int y, uint jersey, double legDeg, double armDeg, bool flip);
+    void Throw(int x, int y, double t, uint jersey, bool flip, Action<int, int>? handAt);
+    void Spin(int x, int y, double phase, uint jersey, out int hx, out int hy);
+    void Celebrate(int x, int y, double t, uint jersey);
+    void Fallen(int x, int y, uint jersey);
+}
+
+/// <summary>Static facade kept for call-site stability; delegates to the active renderer.</summary>
 public static class Athlete
 {
+    public static IAthleteRenderer Renderer = new VectorAthlete();
+
+    public static void Run(int x, int y, double phase, double speed01, uint jersey, bool flip = false)
+        => Renderer.Run(x, y, phase, speed01, jersey, flip);
+    public static void Crouch(int x, int y, uint jersey, bool flip = false)
+        => Renderer.Crouch(x, y, jersey, flip);
+    public static void Fly(int x, int y, uint jersey, double legDeg = 45, double armDeg = -140, bool flip = false)
+        => Renderer.Fly(x, y, jersey, legDeg, armDeg, flip);
+    public static void Throw(int x, int y, double t, uint jersey, bool flip = false, Action<int, int>? handAt = null)
+        => Renderer.Throw(x, y, t, jersey, flip, handAt);
+    public static void Spin(int x, int y, double phase, uint jersey, out int hx, out int hy)
+        => Renderer.Spin(x, y, phase, jersey, out hx, out hy);
+    public static void Celebrate(int x, int y, double t, uint jersey)
+        => Renderer.Celebrate(x, y, t, jersey);
+    public static void Fallen(int x, int y, uint jersey)
+        => Renderer.Fallen(x, y, jersey);
+}
+
+/// <summary>
+/// Procedural pixel athlete: a small articulated skeleton rendered with thick lines.
+/// (x, y) = ground point under the hips. Faces +X unless flipped. Sports a moustache.
+/// </summary>
+public class VectorAthlete : IAthleteRenderer
+{
     private const double D2R = Math.PI / 180.0;
+    private static readonly uint Moustache = Gfx.Rgb(70, 45, 15);
 
     private static void Limb(int x0, int y0, double angDeg, double len1, double kneeDeg, double len2,
                              uint c, int m, out int fx, out int fy)
@@ -22,33 +60,33 @@ public static class Athlete
         Gfx.Line(kx, ky, fx, fy, c, 2);
     }
 
-    private static void Head(int cx, int cy, uint skin)
+    private static void Head(int cx, int cy, int m)
     {
-        Gfx.FillRect(cx - 2, cy - 2, 4, 4, skin);
-        Gfx.HLine(cx - 2, cy - 3, 4, Gfx.Black); // hair
+        Gfx.FillRect(cx - 2, cy - 2, 4, 4, Gfx.Skin);
+        Gfx.HLine(cx - 2, cy - 3, 4, Gfx.Black);          // hair
+        Gfx.HLine(cx - 1 + m, cy + 1, 2, Moustache);      // moustache on the facing side
     }
 
-    /// <summary>Running cycle. phase in radians, speed01 exaggerates the stride.</summary>
-    public static void Run(int x, int y, double phase, double speed01, uint jersey, bool flip = false)
+    public void Run(int x, int y, double phase, double speed01, uint jersey, bool flip)
     {
         int m = flip ? -1 : 1;
         double s = 20 + 35 * Math.Clamp(speed01, 0, 1); // stride amplitude in degrees
-        int hipY = y - 12, shX = x + 1 * m, shY = hipY - 8;
+        int hipY = y - 12, shX = x + 2 * m, shY = hipY - 8;
 
-        // back arm first (drawn under body)
-        Limb(shX, shY, Math.Sin(phase + Math.PI) * s * 0.8, 4, -70, 4, Gfx.Rgb(200, 150, 100), m, out _, out _);
-        // legs
-        Limb(x, hipY, Math.Sin(phase) * s, 6, Math.Max(0, -Math.Cos(phase)) * 70, 6, Gfx.Skin, m, out _, out _);
-        Limb(x, hipY, Math.Sin(phase + Math.PI) * s, 6, Math.Max(0, Math.Cos(phase)) * 70, 6, Gfx.Skin, m, out _, out _);
+        // back arm first (drawn under body); elbows pump bent FORWARD
+        Limb(shX, shY, Math.Sin(phase + Math.PI) * s * 0.8, 4, 65, 4, Gfx.Rgb(200, 150, 100), m, out _, out _);
+        // legs: knee flexes BACKWARD (heel kicks up behind) while the leg swings through
+        Limb(x, hipY, Math.Sin(phase) * s, 6, -Math.Max(0, Math.Cos(phase)) * 80, 6, Gfx.Skin, m, out _, out _);
+        Limb(x, hipY, Math.Sin(phase + Math.PI) * s, 6, -Math.Max(0, -Math.Cos(phase)) * 80, 6, Gfx.Skin, m, out _, out _);
         // torso leaning forward
         Gfx.Line(x, hipY, shX, shY, jersey, 3);
         Gfx.FillRect(x - 2, hipY - 1, 5, 3, Gfx.White); // shorts
         // front arm
-        Limb(shX, shY, Math.Sin(phase) * s * 0.8, 4, -70, 4, Gfx.Skin, m, out _, out _);
-        Head(shX + 1 * m, shY - 4, Gfx.Skin);
+        Limb(shX, shY, Math.Sin(phase) * s * 0.8, 4, 65, 4, Gfx.Skin, m, out _, out _);
+        Head(shX + 1 * m, shY - 4, m);
     }
 
-    public static void Crouch(int x, int y, uint jersey, bool flip = false)
+    public void Crouch(int x, int y, uint jersey, bool flip)
     {
         int m = flip ? -1 : 1;
         int hipY = y - 6;
@@ -57,11 +95,10 @@ public static class Athlete
         int shX = x + 5 * m, shY = hipY - 4;
         Gfx.Line(x, hipY, shX, shY, jersey, 3);
         Gfx.Line(shX, shY, shX + 1 * m, y, Gfx.Skin, 1); // arm to ground
-        Head(shX + 2 * m, shY - 4, Gfx.Skin);
+        Head(shX + 2 * m, shY - 4, m);
     }
 
-    /// <summary>Airborne pose; legDeg tilts legs forward for jumps.</summary>
-    public static void Fly(int x, int y, uint jersey, double legDeg = 45, double armDeg = -140, bool flip = false)
+    public void Fly(int x, int y, uint jersey, double legDeg, double armDeg, bool flip)
     {
         int m = flip ? -1 : 1;
         int hipY = y - 12, shX = x + 1 * m, shY = hipY - 8;
@@ -71,12 +108,10 @@ public static class Athlete
         Gfx.FillRect(x - 2, hipY - 1, 5, 3, Gfx.White);
         Limb(shX, shY, armDeg, 4, 20, 4, Gfx.Skin, m, out _, out _);
         Limb(shX, shY, armDeg + 30, 4, 20, 4, Gfx.Skin, m, out _, out _);
-        Head(shX + 1 * m, shY - 4, Gfx.Skin);
+        Head(shX + 1 * m, shY - 4, m);
     }
 
-    /// <summary>Throw wind-up / release. t: 0 = arm fully back, 1 = arm fully forward.</summary>
-    public static void Throw(int x, int y, double t, uint jersey, bool flip = false,
-                             Action<int, int>? handAt = null)
+    public void Throw(int x, int y, double t, uint jersey, bool flip, Action<int, int>? handAt)
     {
         int m = flip ? -1 : 1;
         int hipY = y - 12, shX = x, shY = hipY - 8;
@@ -90,21 +125,19 @@ public static class Athlete
         int hx = shX + (int)Math.Round(Math.Sin(a) * 8) * m;
         int hy = shY + (int)Math.Round(Math.Cos(a) * 8);
         Gfx.Line(shX, shY, hx, hy, Gfx.Skin, 2);
-        Head(shX + 1 * m, shY - 4, Gfx.Skin);
+        Head(shX + 1 * m, shY - 4, m);
         handAt?.Invoke(hx, hy);
     }
 
-    /// <summary>Hammer spin, side view fake of a top-down rotation. phase = hammer angle in radians.</summary>
-    public static void Spin(int x, int y, double phase, uint jersey, out int hx, out int hy)
+    public void Spin(int x, int y, double phase, uint jersey, out int hx, out int hy)
     {
         int hipY = y - 12, shY = hipY - 8;
-        // body wobbles slightly
         int bx = x + (int)Math.Round(Math.Cos(phase) * 2);
         Gfx.Line(x - 2, y, x, hipY, Gfx.Skin, 2);
         Gfx.Line(x + 2, y, x, hipY, Gfx.Skin, 2);
         Gfx.Line(x, hipY, bx, shY, jersey, 3);
         Gfx.FillRect(x - 2, hipY - 1, 5, 3, Gfx.White);
-        Head(bx, shY - 4, Gfx.Skin);
+        Head(bx, shY - 4, 1);
         // arms + wire toward the hammer ball; ellipse squashes Y to fake perspective
         hx = bx + (int)Math.Round(Math.Cos(phase) * 16);
         hy = shY + (int)Math.Round(Math.Sin(phase) * 6);
@@ -112,7 +145,7 @@ public static class Athlete
         Gfx.Circle(hx, hy, 2, Gfx.DarkGray);
     }
 
-    public static void Celebrate(int x, int y, double t, uint jersey)
+    public void Celebrate(int x, int y, double t, uint jersey)
     {
         int hop = (int)(Math.Abs(Math.Sin(t * 6)) * 3);
         int gy = y - hop;
@@ -123,15 +156,87 @@ public static class Athlete
         Gfx.FillRect(x - 2, hipY - 1, 5, 3, Gfx.White);
         Gfx.Line(x, shY, x - 5, shY - 6, Gfx.Skin, 2);
         Gfx.Line(x, shY, x + 5, shY - 6, Gfx.Skin, 2);
-        Head(x, shY - 4, Gfx.Skin);
+        Head(x, shY - 4, 1);
     }
 
-    public static void Fallen(int x, int y, uint jersey)
+    public void Fallen(int x, int y, uint jersey)
     {
         Gfx.Line(x - 8, y - 2, x + 4, y - 2, jersey, 3);
         Gfx.Line(x + 4, y - 2, x + 9, y - 3, Gfx.Skin, 2);
         Gfx.FillRect(x + 9, y - 5, 4, 4, Gfx.Skin);
+        Gfx.HLine(x + 10, y - 2, 2, Moustache);
         Gfx.Line(x - 8, y - 2, x - 12, y - 1, Gfx.Skin, 2);
+    }
+}
+
+/// <summary>
+/// Sprite-sheet athlete: replaces poses with string-art frames anchored at bottom-center.
+/// Any pose left null falls back to the vector renderer, so partial sheets work.
+/// Frame chars: 'J' = jersey color, 's' = skin, 'h' = hair/dark, 'w' = white, '.' = transparent.
+/// </summary>
+public class SpriteAthlete : IAthleteRenderer
+{
+    private readonly IAthleteRenderer _fallback = new VectorAthlete();
+
+    public string[][]? RunFrames;     // cycled by run phase
+    public string[]? CrouchFrame;
+    public string[]? FlyFrame;
+    public string[]? ThrowFrame;
+    public string[]? FallenFrame;
+
+    /// <summary>Optional palette override: (char, jersey) -> color.</summary>
+    public Func<char, uint, uint>? Palette;
+
+    private uint Pal(char c, uint jersey) => Palette?.Invoke(c, jersey) ?? c switch
+    {
+        'J' => jersey,
+        's' => Gfx.Skin,
+        'h' => Gfx.Black,
+        'w' => Gfx.White,
+        _ => Gfx.White,
+    };
+
+    private void Blit(string[] frame, int x, int y, uint jersey, bool flip)
+    {
+        int w = frame[0].Length, h = frame.Length;
+        Gfx.Sprite(x - w / 2, y - h, frame, c => Pal(c, jersey), flip);
+    }
+
+    public void Run(int x, int y, double phase, double speed01, uint jersey, bool flip)
+    {
+        if (RunFrames is { Length: > 0 })
+            Blit(RunFrames[(int)(phase / Math.PI) % RunFrames.Length], x, y, jersey, flip);
+        else _fallback.Run(x, y, phase, speed01, jersey, flip);
+    }
+
+    public void Crouch(int x, int y, uint jersey, bool flip)
+    {
+        if (CrouchFrame != null) Blit(CrouchFrame, x, y, jersey, flip);
+        else _fallback.Crouch(x, y, jersey, flip);
+    }
+
+    public void Fly(int x, int y, uint jersey, double legDeg, double armDeg, bool flip)
+    {
+        if (FlyFrame != null) Blit(FlyFrame, x, y, jersey, flip);
+        else _fallback.Fly(x, y, jersey, legDeg, armDeg, flip);
+    }
+
+    public void Throw(int x, int y, double t, uint jersey, bool flip, Action<int, int>? handAt)
+    {
+        if (ThrowFrame != null) { Blit(ThrowFrame, x, y, jersey, flip); handAt?.Invoke(x + 6, y - 20); }
+        else _fallback.Throw(x, y, t, jersey, flip, handAt);
+    }
+
+    public void Spin(int x, int y, double phase, uint jersey, out int hx, out int hy)
+        => _fallback.Spin(x, y, phase, jersey, out hx, out hy);
+
+    public void Celebrate(int x, int y, double t, uint jersey)
+        => _fallback.Celebrate(x, y, t, jersey);
+
+    public void Fallen(int x, int y, uint jersey)
+    {
+        if (FallenFrame != null) Blit(FallenFrame, x, y, jersey, false);
+        else _fallback.Fallen(x, y, jersey);
     }
 }
 

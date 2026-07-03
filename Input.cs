@@ -21,7 +21,25 @@ public static class Input
     public static bool ActionDown => Down[Action];
     public static bool StartPressed { get; private set; }
 
-    /// <summary>Called from JS on keydown/keyup/gamepad transitions.</summary>
+    // --- raw code layer: JS forwards every KeyboardEvent.code and PAD<i> transition ---
+    /// <summary>While true, raw presses are captured for rebinding instead of being mapped.</summary>
+    public static bool Capturing;
+    public static string? CapturedCode;
+
+    public static void OnRaw(string code, bool isDown)
+    {
+        if (Capturing)
+        {
+            if (isDown) CapturedCode = code;
+            return;
+        }
+        if (Settings.Bindings.TryGetValue(code, out int btn)) OnButton(btn, isDown);
+    }
+
+    /// <summary>Release everything (e.g. after a rebind, stale downs may linger).</summary>
+    public static void ClearState() => Array.Clear(Down);
+
+    /// <summary>Called with a mapped button transition.</summary>
     public static void OnButton(int button, bool isDown)
     {
         if ((uint)button >= 4) return;

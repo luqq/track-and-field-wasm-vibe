@@ -53,7 +53,7 @@ public static class Input
 public class RunMeter
 {
     public double SpeedCms;               // current speed, cm/s
-    public const double TapGain = 55.0;   // cm/s added per valid button edge
+    public double TapGain = 55.0;         // cm/s added per valid button edge (per-event tunable)
     public const double Friction = 0.008; // proportional decay per frame (60 Hz)
     public const double MaxSpeed = 1700.0;
 

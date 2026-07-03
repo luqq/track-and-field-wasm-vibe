@@ -56,10 +56,10 @@ public class LongJump : EventBase
                 break;
 
             case Ph.Hold:
+                // planted for takeoff: the athlete stops dead while the angle climbs,
+                // but friction keeps draining the speed he built up
                 _run.Step(0);
-                _posCm += _run.SpeedCms * Dt;
                 _angle = Math.Min(90, _angle + 1.5);
-                if (_posCm >= FoulCm) { Foul(); return; }
                 if (Input.ActionReleased || _angle >= 90) Launch();
                 break;
 
@@ -154,12 +154,14 @@ public class LongJump : EventBase
         {
             case Ph.Wait:
             case Ph.Run:
-            case Ph.Hold:
                 int px = (int)(_posCm * Scene.PxPerCm) - cam;
                 if (_run.SpeedCms > 1)
                     Athlete.Run(px, Scene.GroundY, _anim * Math.PI, _run.SpeedCms / 1400, Gfx.Red);
                 else Athlete.Crouch(px, Scene.GroundY, Gfx.Red);
-                if (_ph == Ph.Hold) Scene.AngleMeter(_angle);
+                break;
+            case Ph.Hold:
+                Athlete.Crouch((int)(_posCm * Scene.PxPerCm) - cam, Scene.GroundY, Gfx.Red);
+                Scene.AngleMeter(_angle);
                 break;
             case Ph.Fly:
                 int fx = (int)(_fx * Scene.PxPerCm) - cam;
@@ -214,6 +216,9 @@ public class Javelin : EventBase
     public override void Reset(int match)
     {
         _qual = match switch { 1 => 70.00, 2 => 75.00, _ => 80.00 };
+        // generous tap gain: on the original board reaching the 1300 cm/s cap was the
+        // easy part (hence the cap) — the skill lives in the release angle
+        _run.TapGain = 78.0;
         _attempt = 0; _best = 0; _prevMark = 0; Array.Clear(_marks);
         Finished = Qualified = false; Points = 0; ResultText = "";
         NextAttempt();
@@ -246,8 +251,8 @@ public class Javelin : EventBase
 
             case Ph.Hold:
                 _run.Step(0);
-                _posCm += _run.SpeedCms * Dt * 0.5; // planting slows the athlete
-                _angle = Math.Min(88, _angle + 1.5);
+                _posCm += _run.SpeedCms * Dt * 0.35; // planting slows the athlete
+                _angle = Math.Min(88, _angle + 1.2); // slower climb = finer aim control
                 if (_posCm >= FoulCm) { Foul(); return; }
                 if (Input.ActionReleased || _angle >= 88) BeginThrow();
                 break;

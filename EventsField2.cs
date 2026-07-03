@@ -137,7 +137,7 @@ public class Hammer : EventBase
         double focus = _ph == Ph.Fly ? _hx : 0;
         int cam = Math.Max(0, (int)(focus * Scene.PxPerCm) - 80);
         Scene.DrawStadium(cam);
-        Scene.DrawField(cam, CircleCm, 110);
+        Scene.DrawField(cam, CircleCm, 110, Name);
 
         int cx = (int)(CircleCm * Scene.PxPerCm) - cam - 10;
         // throwing circle
@@ -147,11 +147,11 @@ public class Hammer : EventBase
         {
             case Ph.Wait:
                 Athlete.Spin(cx, Scene.GroundY, Math.PI, Game.CurJersey, out _, out _);
-                Gfx.TextCentered(96, L.PressRunToSpin, Gfx.Yellow);
+                Gfx.TextCentered(112, L.PressRunToSpin, Gfx.Yellow);
                 break;
             case Ph.Spin:
                 Athlete.Spin(cx, Scene.GroundY, _spinPhase, Game.CurJersey, out _, out _);
-                Gfx.Text(8, 92, $"{L.Revs} {_revs}", _revs >= 9 ? Gfx.Red : Gfx.Yellow);
+                Gfx.Text(8, 106, $"{L.Revs} {_revs}", _revs >= 9 ? Gfx.Red : Gfx.Yellow);
                 // release-direction hint dial
                 double d = _spinPhase;
                 Gfx.Circle(226, 206, 2, Gfx.White);
@@ -162,17 +162,17 @@ public class Hammer : EventBase
                 int hx = (int)(_hx * Scene.PxPerCm) - cam;
                 int hy = Scene.GroundY - (int)(_hy * 0.28);
                 Gfx.Circle(hx, hy, 2, Gfx.DarkGray);
-                Gfx.Text(8, 92, $"{_releaseDeg}~", Gfx.Yellow);
+                Gfx.Text(8, 106, $"{_releaseDeg}~", Gfx.Yellow);
                 break;
             case Ph.Land:
-                Gfx.TextCentered(96, $"{_marks[_attempt - 1]:0.00} M", Gfx.White, 2);
-                Gfx.TextCentered(114, $"ANGLE {_releaseDeg}~", Gfx.Yellow);
+                Gfx.TextCentered(112, $"{_marks[_attempt - 1]:0.00} M", Gfx.White, 2);
+                Gfx.TextCentered(128, $"ANGLE {_releaseDeg}~", Gfx.Yellow);
                 break;
             case Ph.Foul:
-                Gfx.TextCentered(96, ResultText, Gfx.Red);
+                Gfx.TextCentered(112, ResultText, Gfx.Red);
                 break;
             case Ph.Done:
-                Gfx.TextCentered(96, ResultText, Gfx.White, 2);
+                Gfx.TextCentered(112, ResultText, Gfx.White, 2);
                 break;
         }
 
@@ -340,9 +340,11 @@ public class HighJump : EventBase
     public override void Draw()
     {
         Scene.DrawStadium(0);
-        Gfx.FillRect(0, 88, Gfx.W, Gfx.H - 88, Gfx.Grass);
-        for (int y = 88; y < Gfx.H; y += 8) Gfx.HLine(0, y, Gfx.W, Gfx.GrassDark);
-        Gfx.FillRect(0, Scene.GroundY - 3, (int)(BarXCm * Scene.PxPerCm) - 6, 10, Gfx.TrackRed);
+        Scene.DrawEventBand(Name);
+        Gfx.FillRect(0, 102, Gfx.W, Gfx.H - 102, Gfx.Grass);
+        for (int y = 104; y < 208; y += 8) Gfx.HLine(0, y, Gfx.W, Gfx.GrassDark);
+        Gfx.FillRect(0, Scene.GroundY - 3, (int)(BarXCm * Scene.PxPerCm) - 6, 10, Gfx.Salmon);
+        Gfx.FillRect(0, 208, Gfx.W, 16, Gfx.Black); // bottom info band
 
         int barX = (int)(BarXCm * Scene.PxPerCm);
         int barY = Scene.GroundY - (int)(_barM * 100 * 0.35);
@@ -369,18 +371,18 @@ public class HighJump : EventBase
                 int fx = (int)(_jx * Scene.PxPerCm);
                 int fy = Scene.GroundY - (int)(_jy * 0.35);
                 Athlete.Fly(fx, fy, Game.CurJersey, _crossed ? 70 : 20, -160);
-                Gfx.Text(8, 92, $"H {_jy / 100:0.00}M", Gfx.Yellow);
+                Gfx.Text(8, 106, $"H {_jy / 100:0.00}M", Gfx.Yellow);
                 break;
             case Ph.Cleared:
                 Athlete.Celebrate(barX + 20, Scene.GroundY, _phT, Game.CurJersey);
-                Gfx.TextCentered(96, $"{_barM:0.00} M {L.Cleared}", Gfx.White, 2);
+                Gfx.TextCentered(112, $"{_barM:0.00} M {L.Cleared}", Gfx.White, 2);
                 break;
             case Ph.Foul:
                 Athlete.Fallen(barX + (_crossed ? 20 : -14), Scene.GroundY, Game.CurJersey);
-                Gfx.TextCentered(96, _hitBar ? L.BarDown : L.Foul, Gfx.Red, 2);
+                Gfx.TextCentered(112, _hitBar ? L.BarDown : L.Foul, Gfx.Red, 2);
                 break;
             case Ph.Done:
-                Gfx.TextCentered(96, ResultText, Gfx.White, 2);
+                Gfx.TextCentered(112, ResultText, Gfx.White, 2);
                 break;
         }
 

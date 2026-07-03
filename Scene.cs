@@ -74,43 +74,79 @@ public static class Scene
         Gfx.Text(192, 40, ev.HudBox, Gfx.Yellow, 2);
     }
 
-    /// <summary>Two-lane running track with 10 m markers. camPx = camera in world pixels.</summary>
-    public static void DrawTrack(int camPx, int totalCm)
+    /// <summary>Light-gray band carrying the event name, flanked by little flags.</summary>
+    public static void DrawEventBand(string name)
     {
-        Gfx.FillRect(0, 88, Gfx.W, Gfx.H - 88, Gfx.TrackRed);
-        // lane lines
-        Gfx.HLine(0, 126, Gfx.W, Gfx.White);
+        Gfx.FillRect(0, 88, Gfx.W, 14, Gfx.LightGray);
+        Gfx.HLine(0, 88, Gfx.W, Gfx.White);
+        Gfx.HLine(0, 101, Gfx.W, Gfx.Gray);
+        Gfx.TextCentered(91, name, Gfx.Black);
+        // left: vertical tricolor
+        Gfx.FillRect(5, 90, 4, 9, Gfx.Blue);
+        Gfx.FillRect(9, 90, 4, 9, Gfx.White);
+        Gfx.FillRect(13, 90, 4, 9, Gfx.Red);
+        // right: horizontal stripes with canton
+        for (int i = 0; i < 9; i++) Gfx.HLine(238, 90 + i, 14, i % 2 == 0 ? Gfx.Red : Gfx.White);
+        Gfx.FillRect(238, 90, 6, 5, Gfx.Blue);
+    }
+
+    /// <summary>Green infield with two salmon running lanes, 10 m markers and finish tape.</summary>
+    public static void DrawTrack(int camPx, int totalCm, string name)
+    {
+        DrawEventBand(name);
+        Gfx.FillRect(0, 102, Gfx.W, Gfx.H - 102, Gfx.Grass);
+
+        // salmon lane bands (rival above, player below)
+        Gfx.FillRect(0, RivalY - 26, Gfx.W, 30, Gfx.Salmon);
+        Gfx.HLine(0, RivalY - 26, Gfx.W, Gfx.White);
         Gfx.HLine(0, RivalY + 4, Gfx.W, Gfx.White);
+        Gfx.FillRect(0, GroundY - 24, Gfx.W, 28, Gfx.Salmon);
+        Gfx.HLine(0, GroundY - 24, Gfx.W, Gfx.White);
         Gfx.HLine(0, GroundY + 4, Gfx.W, Gfx.White);
-        Gfx.FillRect(0, GroundY + 8, Gfx.W, Gfx.H - GroundY - 8, Gfx.TrackRedDark);
 
         for (int m = 0; m * 1000 <= totalCm; m++) // every 10 m
         {
             int wx = (int)(m * 1000 * PxPerCm) - camPx;
             if (wx < -20 || wx > Gfx.W + 20) continue;
-            Gfx.VLine(wx, 126, GroundY + 4 - 126, Gfx.Rgb(240, 200, 180));
-            Gfx.Text(wx + 2, 130, (m * 10).ToString(), Gfx.White);
+            Gfx.Text(wx + 2, 108, (m * 10).ToString(), Gfx.White);
+            Gfx.VLine(wx, RivalY - 26, 30, Gfx.Rgb(255, 200, 180));
+            Gfx.VLine(wx, GroundY - 24, 28, Gfx.Rgb(255, 200, 180));
         }
         // start and finish lines
         int sx = -camPx, fx = (int)(totalCm * PxPerCm) - camPx;
-        if (sx > -6 && sx < Gfx.W) Gfx.FillRect(sx - 2, 126, 3, GroundY + 4 - 126, Gfx.White);
+        if (sx > -6 && sx < Gfx.W)
+        {
+            Gfx.FillRect(sx - 2, RivalY - 26, 3, 30, Gfx.White);
+            Gfx.FillRect(sx - 2, GroundY - 24, 3, 28, Gfx.White);
+        }
         if (fx > -6 && fx < Gfx.W + 6)
         {
-            for (int y = 126; y < GroundY + 4; y += 4)
+            for (int y = RivalY - 26; y < GroundY + 4; y += 4)
             {
                 Gfx.FillRect(fx, y, 2, 2, Gfx.White);
                 Gfx.FillRect(fx + 2, y + 2, 2, 2, Gfx.Black);
             }
         }
+        Gfx.FillRect(0, 208, Gfx.W, 16, Gfx.Black); // bottom info band
+    }
+
+    /// <summary>Numbered chip + name label at the left of a lane (pre-start).</summary>
+    public static void LaneTag(int laneY, string num, string name, uint c)
+    {
+        Gfx.FillRect(2, laneY - 19, 9, 9, Gfx.White);
+        Gfx.Text(4, laneY - 18, num, Gfx.Black);
+        Gfx.Text(14, laneY - 18, name, c);
     }
 
     /// <summary>Runway + field for throws/jumps: green field with distance arcs every 10 m past the foul line.</summary>
-    public static void DrawField(int camPx, int foulCm, int maxMeters)
+    public static void DrawField(int camPx, int foulCm, int maxMeters, string name)
     {
-        Gfx.FillRect(0, 88, Gfx.W, Gfx.H - 88, Gfx.Grass);
-        for (int y = 88; y < Gfx.H; y += 8) Gfx.HLine(0, y, Gfx.W, Gfx.GrassDark);
+        DrawEventBand(name);
+        Gfx.FillRect(0, 102, Gfx.W, Gfx.H - 102, Gfx.Grass);
+        for (int y = 104; y < 208; y += 8) Gfx.HLine(0, y, Gfx.W, Gfx.GrassDark);
         // runway
-        Gfx.FillRect(0, GroundY - 4, (int)(foulCm * PxPerCm) - camPx + 4, 12, Gfx.TrackRed);
+        Gfx.FillRect(0, GroundY - 4, (int)(foulCm * PxPerCm) - camPx + 4, 12, Gfx.Salmon);
+        Gfx.HLine(0, GroundY - 5, (int)(foulCm * PxPerCm) - camPx + 4, Gfx.White);
         // foul line
         int fl = (int)(foulCm * PxPerCm) - camPx;
         if (fl > -4 && fl < Gfx.W) Gfx.FillRect(fl, GroundY - 6, 3, 14, Gfx.White);
@@ -119,27 +155,28 @@ public static class Scene
         {
             int wx = (int)((foulCm + m * 100) * PxPerCm) - camPx;
             if (wx < -20 || wx > Gfx.W + 20) continue;
-            Gfx.VLine(wx, 100, GroundY - 90, Gfx.White);
+            Gfx.VLine(wx, 110, GroundY - 100, Gfx.White);
             Gfx.Text(wx - 5, GroundY + 8, m.ToString(), Gfx.White);
         }
+        Gfx.FillRect(0, 208, Gfx.W, 16, Gfx.Black); // bottom info band
     }
 
+    /// <summary>Bottom readout, original style: SPEED= segmented bar + numeric CM/SEC.</summary>
     public static void SpeedBar(double speedCms)
     {
-        Gfx.Text(8, 200, L.Speed, Gfx.White);
-        Gfx.FillRect(48, 200, 154, 7, Gfx.DarkGray);
-        int w = (int)(Math.Clamp(speedCms / 1500.0, 0, 1) * 152);
-        uint c = speedCms > 1200 ? Gfx.Red : speedCms > 800 ? Gfx.Yellow : Gfx.Cyan;
-        Gfx.FillRect(49, 201, w, 5, c);
-        // 1300 cm/s javelin cap notch
-        Gfx.VLine(49 + (int)(1300 / 1500.0 * 152), 199, 9, Gfx.White);
+        Gfx.FillRect(0, 208, Gfx.W, 16, Gfx.Black);
+        Gfx.Text(4, 212, $"{L.Speed}=", Gfx.White);
+        int seg = (int)(Math.Clamp(speedCms / 1500.0, 0, 1) * 20);
+        for (int i = 0; i < 20; i++)
+            Gfx.FillRect(46 + i * 5, 211, 4, 9, i < seg ? (i >= 17 ? Gfx.Red : Gfx.Yellow) : Gfx.DarkGray);
+        Gfx.Text(160, 212, $"{(int)speedCms:0000}CM/SEC", Gfx.White);
     }
 
+    /// <summary>Boxed launch-angle readout, original style.</summary>
     public static void AngleMeter(double deg)
     {
-        Gfx.Text(206, 200, $"{(int)deg,2}~", Gfx.Yellow);
-        int cx = 232, cy = 213;
-        double a = deg * Math.PI / 180;
-        Gfx.Line(cx, cy, cx + (int)(Math.Cos(a) * 12), cy - (int)(Math.Sin(a) * 12), Gfx.Yellow, 1);
+        Gfx.FillRect(4, 146, 28, 13, Gfx.Black);
+        Gfx.Rect(4, 146, 28, 13, Gfx.White);
+        Gfx.Text(9, 149, $"{(int)deg,2}~", Gfx.Yellow);
     }
 }

@@ -152,7 +152,7 @@ public class LongJump : EventBase
         double focus = _ph == Ph.Fly || _ph == Ph.Land ? _fx : _posCm;
         int cam = Math.Max(0, (int)(focus * Scene.PxPerCm) - 70);
         Scene.DrawStadium(cam);
-        Scene.DrawField(cam, FoulCm, 12);
+        Scene.DrawField(cam, FoulCm, 12, Name);
         // sand pit
         int pit = (int)(FoulCm * Scene.PxPerCm) - cam;
         Gfx.FillRect(pit + 3, Scene.GroundY - 3, (int)(1100 * Scene.PxPerCm), 10, Gfx.Sand);
@@ -179,13 +179,13 @@ public class LongJump : EventBase
             case Ph.Land:
                 int lx = (int)(_fx * Scene.PxPerCm) - cam;
                 Athlete.Crouch(lx, Scene.GroundY, Game.CurJersey);
-                Gfx.TextCentered(96, $"{_marks[_attempt - 1]:0.00} M", Gfx.White, 2);
+                Gfx.TextCentered(112, $"{_marks[_attempt - 1]:0.00} M", Gfx.White, 2);
                 break;
             case Ph.Foul:
-                Gfx.TextCentered(96, L.Foul, Gfx.Red, 2);
+                Gfx.TextCentered(112, L.Foul, Gfx.Red, 2);
                 break;
             case Ph.Done:
-                Gfx.TextCentered(96, ResultText, Gfx.White, 2);
+                Gfx.TextCentered(112, ResultText, Gfx.White, 2);
                 break;
         }
 
@@ -388,7 +388,7 @@ public class Javelin : EventBase
         double focus = _ph is Ph.Fly ? _jx : _posCm;
         int cam = Math.Max(0, (int)(focus * Scene.PxPerCm) - 70);
         Scene.DrawStadium(cam);
-        Scene.DrawField(cam, FoulCm, 110);
+        Scene.DrawField(cam, FoulCm, 110, Name);
 
         int px = (int)(_posCm * Scene.PxPerCm) - cam;
         switch (_ph)
@@ -426,14 +426,14 @@ public class Javelin : EventBase
             case Ph.Land:
                 int lx = (int)(_jx * Scene.PxPerCm) - cam;
                 Gfx.Line(lx, Scene.GroundY - 8, lx + 4, Scene.GroundY, Gfx.White, 1);
-                Gfx.TextCentered(96, $"{_marks[_attempt - 1]:0.00} M", _rolledOver ? Gfx.Red : Gfx.White, 2);
-                if (_rolledOver) Gfx.TextCentered(114, L.Rollover, Gfx.Red);
+                Gfx.TextCentered(112, $"{_marks[_attempt - 1]:0.00} M", _rolledOver ? Gfx.Red : Gfx.White, 2);
+                if (_rolledOver) Gfx.TextCentered(128, L.Rollover, Gfx.Red);
                 break;
             case Ph.Foul:
-                Gfx.TextCentered(96, L.Foul, Gfx.Red, 2);
+                Gfx.TextCentered(112, L.Foul, Gfx.Red, 2);
                 break;
             case Ph.Done:
-                Gfx.TextCentered(96, ResultText, Gfx.White, 2);
+                Gfx.TextCentered(112, ResultText, Gfx.White, 2);
                 break;
         }
 

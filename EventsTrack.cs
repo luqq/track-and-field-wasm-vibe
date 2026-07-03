@@ -159,7 +159,7 @@ public class Dash100 : EventBase
     {
         int cam = Math.Max(0, (int)(_distCm * Scene.PxPerCm) - 60);
         Scene.DrawStadium(cam);
-        Scene.DrawTrack(cam, TotalCm);
+        Scene.DrawTrack(cam, TotalCm, Name);
 
         int px = (int)(_distCm * Scene.PxPerCm) - cam;
         int rx = (int)(_rDist * Scene.PxPerCm) - cam;
@@ -168,7 +168,9 @@ public class Dash100 : EventBase
         {
             Athlete.Crouch(px, Scene.GroundY, Game.CurJersey);
             Athlete.Crouch(rx, Scene.RivalY, Gfx.Blue);
-            Gfx.TextCentered(96, _ph == Ph.Marks ? L.OnYourMarks : L.Set, Gfx.Yellow);
+            Scene.LaneTag(Scene.RivalY, "2", "COMPUTER", Gfx.Cyan);
+            Scene.LaneTag(Scene.GroundY, "1", $"{Game.HudPlayer} AAA", Gfx.Yellow);
+            Gfx.TextCentered(112, _ph == Ph.Marks ? L.OnYourMarks : L.Set, Gfx.Yellow);
         }
         else
         {
@@ -182,8 +184,8 @@ public class Dash100 : EventBase
 
         if (_ph == Ph.Done)
         {
-            Gfx.TextCentered(96, ResultText, _dq ? Gfx.Red : Gfx.White, 2);
-            if (_rDone && !_dq) Gfx.TextCentered(114, $"{L.Rival} {_rTime:0.00}", Gfx.Cyan);
+            Gfx.TextCentered(112, ResultText, _dq ? Gfx.Red : Gfx.White, 2);
+            if (_rDone && !_dq) Gfx.TextCentered(128, $"{L.Rival} {_rTime:0.00}", Gfx.Cyan);
         }
     }
 }
@@ -316,7 +318,7 @@ public class Hurdles110 : EventBase
     {
         int cam = Math.Max(0, (int)(_distCm * Scene.PxPerCm) - 60);
         Scene.DrawStadium(cam);
-        Scene.DrawTrack(cam, TotalCm);
+        Scene.DrawTrack(cam, TotalCm, Name);
 
         for (int i = 0; i < 10; i++)
         {
@@ -337,7 +339,9 @@ public class Hurdles110 : EventBase
         {
             Athlete.Crouch(px, Scene.GroundY, Game.CurJersey);
             Athlete.Crouch(rx, Scene.RivalY, Gfx.Blue);
-            Gfx.TextCentered(96, _ph == Ph.Marks ? L.OnYourMarks : L.Set, Gfx.Yellow);
+            Scene.LaneTag(Scene.RivalY, "2", "COMPUTER", Gfx.Cyan);
+            Scene.LaneTag(Scene.GroundY, "1", $"{Game.HudPlayer} AAA", Gfx.Yellow);
+            Gfx.TextCentered(112, _ph == Ph.Marks ? L.OnYourMarks : L.Set, Gfx.Yellow);
         }
         else
         {
@@ -353,8 +357,8 @@ public class Hurdles110 : EventBase
 
         if (_ph == Ph.Done)
         {
-            Gfx.TextCentered(96, ResultText, Gfx.White, 2);
-            if (_rDone) Gfx.TextCentered(114, $"{L.Rival} {_rTime:0.00}", Gfx.Cyan);
+            Gfx.TextCentered(112, ResultText, Gfx.White, 2);
+            if (_rDone) Gfx.TextCentered(128, $"{L.Rival} {_rTime:0.00}", Gfx.Cyan);
         }
     }
 }

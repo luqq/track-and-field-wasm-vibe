@@ -31,15 +31,52 @@ const JINGLES = [
     [[1047, 70], [1319, 70], [1568, 70], [1319, 70], [2093, 200]],   // 3 easter egg
     [[1800, 60]],                                                    // 4 starting gun
     [[880, 80], [1109, 80], [1319, 200]],                            // 5 extra life
+    [[523, 130], [523, 70], [659, 130], [523, 70], [784, 200], [659, 100], [1047, 380]], // 6 pre-event fanfare
 ];
 function jingle(id) {
     const seq = JINGLES[id] ?? [];
     let at = 0;
     for (const [f, ms] of seq) { tone(f, ms, 0.18, at); at += ms / 1000 * 0.9; }
 }
+// referee whistle: square carrier warbled by a fast LFO (the rolling pea)
+function whistle(ms) {
+    if (!actx) return;
+    const t = actx.currentTime, dur = ms / 1000;
+    const osc = actx.createOscillator();
+    const gain = actx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 2150;
+    const lfo = actx.createOscillator();
+    const lfoGain = actx.createGain();
+    lfo.type = 'sine';
+    lfo.frequency.value = 55;
+    lfoGain.gain.value = 170;
+    lfo.connect(lfoGain).connect(osc.frequency);
+    gain.gain.setValueAtTime(0.22, t);
+    gain.gain.setValueAtTime(0.22, t + dur - 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.connect(gain).connect(actx.destination);
+    osc.start(t); lfo.start(t);
+    osc.stop(t + dur + 0.02); lfo.stop(t + dur + 0.02);
+}
+
+// local text-to-speech announcer (Web Speech API)
+function say(text, lang) {
+    if (!('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.rate = 1.05;
+    speechSynthesis.cancel(); // monophonic, like everything else in 1983
+    speechSynthesis.speak(u);
+}
 
 runtime.setModuleImports('main.js', {
-    audio: { tone: (f, ms, v) => tone(f, ms, v), jingle },
+    audio: { tone: (f, ms, v) => tone(f, ms, v), jingle, whistle },
+    speech: { say },
+    storage: {
+        get: k => { try { return localStorage.getItem(k); } catch { return null; } },
+        set: (k, v) => { try { localStorage.setItem(k, v); } catch { } },
+    },
 });
 
 const config = runtime.getConfig();
@@ -60,44 +97,46 @@ function blit() {
     ctx2d.putImageData(new ImageData(view, W, H), 0, 0);
 }
 
-// ---- Input: keyboard + gamepad. Buttons: 0/1 RUN, 2 ACTION, 3 START ---------
-const KEYMAP = new Map([
-    ['KeyZ', 0], ['ArrowLeft', 0],
-    ['KeyX', 1], ['ArrowRight', 1],
-    ['Space', 2], ['ArrowUp', 2],
-    ['Enter', 3],
-]);
+// ---- Input: every raw code goes to C#; the binding table lives there ---------
+// Keys that must never scroll/act on the page while playing:
+const SWALLOW = new Set(['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Enter']);
 addEventListener('keydown', e => {
     ensureAudio();
-    const b = KEYMAP.get(e.code);
-    if (b !== undefined && !e.repeat) { Engine.OnButton(b, 1); e.preventDefault(); }
+    if (!e.repeat) Engine.OnKey(e.code, 1);
+    if (SWALLOW.has(e.code)) e.preventDefault();
 });
 addEventListener('keyup', e => {
-    const b = KEYMAP.get(e.code);
-    if (b !== undefined) { Engine.OnButton(b, 0); e.preventDefault(); }
+    Engine.OnKey(e.code, 0);
+    if (SWALLOW.has(e.code)) e.preventDefault();
 });
 
-const padPrev = [false, false, false, false];
+// Gamepad buttons surface as raw codes "PAD0".."PAD15", remappable like any key.
+const padPrev = new Array(16).fill(false);
 function pollGamepad() {
     const gp = navigator.getGamepads?.()[0];
     if (!gp) return;
-    // A/B mash = run, X/RB = action, Start = start
-    const state = [
-        gp.buttons[0]?.pressed ?? false,
-        gp.buttons[1]?.pressed ?? false,
-        (gp.buttons[2]?.pressed || gp.buttons[5]?.pressed) ?? false,
-        gp.buttons[9]?.pressed ?? false,
-    ];
-    for (let i = 0; i < 4; i++) {
-        if (state[i] !== padPrev[i]) { Engine.OnButton(i, state[i] ? 1 : 0); padPrev[i] = state[i]; }
+    const n = Math.min(16, gp.buttons.length);
+    for (let i = 0; i < n; i++) {
+        const down = gp.buttons[i]?.pressed ?? false;
+        if (down !== padPrev[i]) {
+            if (down) ensureAudio();
+            Engine.OnKey('PAD' + i, down ? 1 : 0);
+            padPrev[i] = down;
+        }
     }
 }
 
 // ---- Main loop: V-sync via requestAnimationFrame -----------------------------
 function frame(ts) {
-    pollGamepad();
-    Engine.Update(ts);
-    blit();
+    try {
+        pollGamepad();
+        Engine.Update(ts);
+        blit();
+    } catch (e) {
+        // keep the loop alive and surface the failure instead of dying silently
+        window.__frameErr = String(e?.stack ?? e);
+        console.error('frame error:', e);
+    }
     requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

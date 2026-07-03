@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Track &amp; Field (1983) — .NET 10 WASM</title>
+    <title>Prank + Yield — .NET 10 WASM</title>
     <style>
         html, body {
             margin: 0;
@@ -14,13 +14,13 @@
             justify-content: center;
             overflow: hidden;
         }
-        /* Native 256x224 backbuffer, GPU-scaled with nearest-neighbour sampling */
+        /* Native 256x224 backbuffer, GPU-stretched to fill the screen with
+           nearest-neighbour sampling — CRTs stretched the signal too */
         #screen {
             image-rendering: pixelated;
             image-rendering: crisp-edges;
-            width: min(100vw, calc(100vh * 256 / 224));
-            height: min(100vh, calc(100vw * 224 / 256));
-            aspect-ratio: 256 / 224;
+            width: 100vw;
+            height: 100vh;
         }
     </style>
 </head>

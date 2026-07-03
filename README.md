@@ -16,11 +16,46 @@ El puerto puede fijarse con `ASPNETCORE_URLS=http://127.0.0.1:5807` (el `firstPo
 
 ## Controles
 
-| Función | Teclas | Gamepad |
+| Función | Teclas (por defecto) | Gamepad (por defecto) |
 |---|---|---|
 | CARRERA (2 botones no discriminados, como la placa original) | `Z` / `X` o `←` / `→` | A / B |
 | ACCIÓN (salto / lanzamiento) | `Espacio` o `↑` | X / RB |
 | START | `Enter` | Start |
+
+Todas las teclas y botones de mando son **redefinibles** desde OPCIONES → REDEFINIR
+TECLAS (los botones del mando aparecen como `PAD0`–`PAD15`). Los ajustes se persisten
+en `localStorage`.
+
+## Menú de opciones
+
+- **Dificultad**: FÁCIL / NORMAL / DIFÍCIL — multiplica las marcas de clasificación y la
+  ganancia por pulsación (ver TUNING.md §Dificultad seleccionable).
+- **Idioma**: castellano, english, català (fuente con glifos Ñ y Ç).
+- **Voz**: locutor local (`speechSynthesis`) que canta marcas, tiempos, nulos y veredictos
+  en el idioma activo.
+- **Modo 2 jugadores**: turnos alternos por prueba, marcadores y vidas independientes,
+  camiseta roja (J1) y verde (J2); eliminación individual y fin de partida cuando no queda nadie.
+
+## Sustituir los atletas vectoriales por sprites (por código)
+
+El render pasa por la interfaz `IAthleteRenderer` (fachada estática `Athlete`). Para usar
+sprites propios basta con asignar el renderizador al arrancar (p. ej. en `Program.cs`):
+
+```csharp
+Athlete.Renderer = new SpriteAthlete
+{
+    RunFrames = new[]
+    {
+        new[] { "...hh...", "...ss...", ".JJJJJ..", "..ss.s..", ".s...s.." }, // frame 1
+        new[] { "...hh...", "...ss...", ".JJJJJ..", "...ss...", "..s.s..." }, // frame 2
+    },
+    // CrouchFrame, FlyFrame, ThrowFrame, FallenFrame... (las poses no definidas
+    // caen automáticamente al esqueleto vectorial)
+};
+```
+
+Caracteres: `J` = camiseta (se tiñe por jugador), `s` = piel, `h` = pelo, `w` = blanco,
+`.` = transparente. Anclaje: centro-inferior en el punto (x, y) del suelo.
 
 ## Arquitectura
 

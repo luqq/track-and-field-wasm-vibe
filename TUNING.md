@@ -27,6 +27,17 @@ Con los valores por defecto: 6 p/s → ~690 · 8 p/s → ~917 · 10 p/s → ~114
 `TapGain` se puede sobrescribir por evento (`_run.TapGain = ...` en su `Reset`), como hace
 la jabalina.
 
+## 1b. Dificultad seleccionable (`Settings.cs`)
+
+El menú de opciones aplica tres multiplicadores globales encima de todo lo demás
+(cada evento los lee en su `Reset`):
+
+| Multiplicador | FÁCIL | NORMAL | DIFÍCIL | Se aplica a |
+|---|---|---|---|---|
+| `TimeF` | ×1.12 | ×1.0 | ×0.94 | Marcas de tiempo (100m, vallas) — más alto = más margen |
+| `DistF` | ×0.85 | ×1.0 | ×1.08 | Marcas de distancia/altura (longitud, jabalina, martillo, altura) |
+| `TapF` | ×1.25 | ×1.0 | ×0.88 | `TapGain` del `RunMeter` en todos los eventos de carrera |
+
 ## 2. Matriz de clasificación (`Reset(int match)` de cada evento)
 
 La dificultad se congela en el Match 3 (`Game.MatchLevel()` capa a 3).

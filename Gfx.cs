@@ -89,6 +89,35 @@ public static class Gfx
     public static void TextCentered(int y, string s, uint c, int scale = 1)
         => Text((W - s.Length * 6 * scale) / 2, y, s, c, scale);
 
+    /// <summary>
+    /// Hyper Olympic-style logo lettering: yellow drop shadow, first letter solid blue
+    /// with white "stars", the rest in horizontal red/white stripes.
+    /// </summary>
+    public static void StripedText(int x, int y, string s, int scale)
+    {
+        Text(x + scale, y + scale, s, Yellow, scale); // drop shadow
+        int cx = x;
+        bool first = true;
+        foreach (char ch in s)
+        {
+            var g = ch == ' ' ? null : Font.Get(ch);
+            if (g != null)
+            {
+                for (int ry = 0; ry < 7; ry++)
+                    for (int rx = 0; rx < 5; rx++)
+                    {
+                        if ((g[ry] & (1 << (4 - rx))) == 0) continue;
+                        uint c = first
+                            ? ((rx + ry) % 3 == 0 && ry < 4 ? White : Blue)   // starred blue
+                            : (ry % 2 == 0 ? Red : White);                    // stripes
+                        FillRect(cx + rx * scale, y + ry * scale, scale, scale, c);
+                    }
+                first = false;
+            }
+            cx += 6 * scale;
+        }
+    }
+
     /// <summary>Draw a tiny sprite authored as rows of chars. '.'=transparent, others looked up in palette.</summary>
     public static void Sprite(int x, int y, string[] rows, Func<char, uint> pal, bool flip = false)
     {

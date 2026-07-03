@@ -352,30 +352,42 @@ public static class Game
 
     private static void DrawTitle()
     {
+        // 1983 attract-mode look: black sky, red desert mesas, green track
         Gfx.Clear(Gfx.Black);
-        Scene.DrawStadium((int)(_titleAnim * 30));
-        Gfx.FillRect(0, 88, Gfx.W, Gfx.H - 88, Gfx.TrackRed);
-        Gfx.HLine(0, 126, Gfx.W, Gfx.White);
-        Gfx.HLine(0, 162, Gfx.W, Gfx.White);
-        Gfx.HLine(0, 194, Gfx.W, Gfx.White);
 
-        Gfx.TextCentered(30, "PRANK + YIELD", Gfx.Yellow, 3);
-        Gfx.TextCentered(58, "KONAMI 1983 - WASM TRIBUTE", Gfx.White);
-
-        // demo runner loops across the track
-        double ph = _titleAnim * 10;
-        int dx = (int)(_titleAnim * 120) % (Gfx.W + 60) - 30;
-        Athlete.Run(dx, 190, ph, 0.8, Gfx.Red);
-        Athlete.Run((dx + 400) % (Gfx.W + 60) - 30, 158, ph + 1.5, 0.8, Gfx.Blue);
+        // stacked stars-and-stripes logo with yellow drop shadow
+        Gfx.StripedText(46, 14, "PRANK", 4);
+        Gfx.StripedText(88, 50, "+YIELD", 4);
 
         string[] items = { L.OnePlayer, L.TwoPlayers, L.Options };
         for (int i = 0; i < items.Length; i++)
         {
             uint c = i == _menuSel ? Gfx.Yellow : Gfx.White;
             string pre = i == _menuSel ? "> " : "  ";
-            Gfx.TextCentered(96 + i * 12, pre + items[i], c);
+            Gfx.TextCentered(96 + i * 11, pre + items[i], c);
         }
-        Gfx.TextCentered(206, L.MenuHint, Gfx.Gray);
+        Gfx.TextCentered(130, L.MenuHint, Gfx.Gray);
+
+        // monument-valley mesas on the horizon
+        Gfx.FillRect(52, 152, 46, 8, Gfx.Red);
+        Gfx.FillRect(60, 144, 30, 8, Gfx.Red);
+        Gfx.FillRect(70, 138, 12, 6, Gfx.Red);
+        Gfx.FillRect(158, 158, 30, 4, Gfx.Red);
+        Gfx.FillRect(164, 152, 18, 6, Gfx.Red);
+        Gfx.FillRect(214, 160, 20, 2, Gfx.Red);
+
+        // green track with lane scanlines
+        Gfx.FillRect(0, 162, Gfx.W, 54, Gfx.Grass);
+        for (int y = 164; y < 216; y += 5) Gfx.HLine(0, y, Gfx.W, Gfx.GrassDark);
+
+        // four demo runners chase each other across the track
+        double ph = _titleAnim * 10;
+        int dx = (int)(_titleAnim * 120) % (Gfx.W + 120) - 60;
+        uint[] jerseys = { Gfx.Rgb(255, 140, 0), Gfx.Cyan, Gfx.Red, Gfx.White };
+        for (int i = 0; i < 4; i++)
+            Athlete.Run(dx - i * 22, 206, ph + i * 1.4, 0.85, jerseys[i]);
+
+        Gfx.TextCentered(216, "(C) KONAMI 1983 - WASM TRIBUTE", Gfx.White);
     }
 
     private static void DrawOptions()

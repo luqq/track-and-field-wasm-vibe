@@ -78,6 +78,10 @@ public static class Font
         G('Ç', "01110|10001|10000|10000|10001|01110|00100");
     }
 
+    /// <summary>Raw glyph rows (7 bytes, low 5 bits) for custom-shaded rendering.</summary>
+    public static byte[]? Get(char c)
+        => Glyphs.TryGetValue(char.ToUpperInvariant(c), out var g) ? g : null;
+
     public static void Draw(int x, int y, char c, uint color, int scale = 1)
     {
         c = char.ToUpperInvariant(c);

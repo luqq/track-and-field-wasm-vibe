@@ -1,6 +1,6 @@
-# Track & Field (1983) — Clon arcade en .NET 10 WebAssembly
+# Prank & Yield, homenaje a Track & Field (1983) arcade en .NET 10 WebAssembly
 
-Réplica del clásico de Konami/Centuri conforme a la especificación arquitectónica: motor
+Homenaje al clásico de Konami/Centuri conforme a la especificación arquitectónica: motor
 100 % C# compilado a WASM (AOT en Release), resolución nativa 256×224 escalada por GPU
 con `image-rendering: pixelated`, y JavaScript reducido al mínimo imprescindible.
 
